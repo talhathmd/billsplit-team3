@@ -5,10 +5,12 @@ import Tesseract from "tesseract.js";
 
 export default function UploadBill() {
   const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const handleImageUpload = async (res: any) => {
     if (res && res[0]) {
-      const imageUrl = res[0].url;
+      const uploadedImageUrl = res[0].url;
+      setImageUrl(uploadedImageUrl);
 
       // Call the API to process the image
       const response = await fetch('/api/process-image', {
@@ -16,7 +18,7 @@ export default function UploadBill() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ imageUrl: uploadedImageUrl }),
       });
 
       const { image: base64Image } = await response.json();
@@ -37,6 +39,14 @@ export default function UploadBill() {
         onClientUploadComplete={handleImageUpload}
         onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
       />
+      {imageUrl && (
+        <button
+          onClick={() => window.open(imageUrl, '_blank')}
+          className="mt-4 px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors duration-200"
+        >
+          View Original Bill
+        </button>
+      )}
       {extractedText && (
         <textarea
           className="w-full h-40 p-2 border rounded bg-gray-100 text-gray-800 font-mono text-sm leading-relaxed"
