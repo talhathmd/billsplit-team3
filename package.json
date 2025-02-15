@@ -10,13 +10,17 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.11.1",
+    "@uploadthing/react": "^7.2.1",
     "clsx": "^2.1.1",
     "mongodb": "^6.13.0",
     "mongoose": "^8.10.0",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.1"
+    "sharp": "^0.33.5",
+    "tailwind-merge": "^3.0.1",
+    "tesseract.js": "^6.0.0",
+    "uploadthing": "^7.5.1"
   },
   "devDependencies": {
     "@types/node": "^20",

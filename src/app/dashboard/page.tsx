@@ -19,7 +19,7 @@ export default function Dashboard() {
 
           {/* Navigation Options */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <DashboardCard title="New Split" link="/dashboard/new-split" />
+            <DashboardCard title="New Split" link="/new-split" />
             <DashboardCard title="History" link="/dashboard/history" />
             <DashboardCard title="Received" link="/dashboard/received" />
             <DashboardCard title="Settings" link="/dashboard/settings" />
