@@ -36,7 +36,7 @@ export default function Home() {
             </h1>
 
             <p className="text-gray-400 text-xl mb-12 max-w-2xl mx-auto">
-              Just snap a photo of your bill, tag your friends, and let our AI handle the rest. No more awkward calculations or payment chasing.
+              Just snap a photo of your bill, tag your friends, and let us handle the rest. No more awkward calculations or payment chasing.
             </p>
 
             <div className="space-y-8">
