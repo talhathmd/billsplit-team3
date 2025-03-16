@@ -57,14 +57,17 @@ export async function POST(req: NextRequest) {
 
     if (!existingUser) {
       // Create a new user if they don't exist
-      await User.create({
+      const newUser = await User.create({
         clerkId: userId,
         name: name || userId,
         email,
         phone,
       });
-      console.log("User created successfully.");
-      return NextResponse.json({ message: "User created successfully" }, { status: 201 });
+
+      // Update the onboarding status
+      await User.findByIdAndUpdate(newUser._id, { onboarded: true });
+
+      return NextResponse.json({ message: "User created successfully", user: newUser }, { status: 201 });
     }
 
     console.log("User already exists.");

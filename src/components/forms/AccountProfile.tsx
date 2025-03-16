@@ -20,7 +20,7 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
   // Local state for form fields with initial values
   const [formData, setFormData] = useState<FormData>({
     phone: "",
-    name: "",
+    name: user?.name || "",
     email: user?.email || "",
   });
 
@@ -40,10 +40,10 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: user.id, // Use Clerk's user ID
-          email: formData.email, // Use email from the user object
+          userId: user.id,
+          email: formData.email,
           phone: formData.phone,
-          name: formData.name, // Include name if needed
+          name: formData.name,
         }),
       });
 
@@ -67,7 +67,7 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
         <input
           id="name"
           name="name"
-          type="text"
+          type="name"
           value={formData.name}
           onChange={handleChange}
           placeholder="Enter your name"

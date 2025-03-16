@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
   const userData = {
     id: user.id,
     email: userEmail,
-    name: "", // Placeholder for name input
+    name: user.fullName, // Placeholder for name input
     phone: "", // Placeholder for phone input
   };
 
