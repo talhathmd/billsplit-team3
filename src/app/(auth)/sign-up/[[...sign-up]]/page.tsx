@@ -1,7 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import Image from "next/image";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export default function SignUpPage() {
   return (
@@ -36,7 +36,7 @@ export default function SignUpPage() {
             path="/sign-up"
             routing="path"
             signInUrl="/sign-in"
-            afterSignUpUrl="/dashboard"
+            forceRedirectUrl="/onboarding"
           />
           <p className="mt-6 text-sm text-center text-gray-400">
             By signing up, you agree to our{" "}
