@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PhoneInput } from "../ui/phone-input";
+
 
 // Define the interface for form data
 interface FormData {
@@ -11,7 +15,12 @@ interface FormData {
 }
 
 interface AccountProfileProps {
-  user: any;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    phone?: string; // Optional phone field
+  };
   btnTitle: string;
 }
 
@@ -19,14 +28,19 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
   const router = useRouter();
   // Local state for form fields with initial values
   const [formData, setFormData] = useState<FormData>({
-    phone: "",
-    name: user?.name || "",
-    email: user?.email || "",
+    phone: user.phone || "", // Use user's phone if available
+    name: user.name || "",
+    email: user.email || "",
   });
 
-  // Handle form input changes
+  // Handle form Input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Handle phone input change
+  const handlePhoneChange = (value: string | undefined) => {
+    setFormData({ ...formData, phone: value || "" }); // Coerce undefined to an empty string
   };
 
   // Handle form submission
@@ -64,10 +78,10 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
       {/* Name Field */}
       <div>
         <label htmlFor="name">Name</label>
-        <input
+        <Input
           id="name"
           name="name"
-          type="name"
+          type="text"
           value={formData.name}
           onChange={handleChange}
           placeholder="Enter your name"
@@ -78,7 +92,7 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
       {/* Email Field */}
       <div>
         <label htmlFor="email">Email</label>
-        <input
+        <Input
           id="email"
           name="email"
           type="email"
@@ -89,21 +103,20 @@ const AccountProfile: React.FC<AccountProfileProps> = ({ user, btnTitle }) => {
         />
       </div>
 
-      {/* Phone */}
-      <div>
-        <label htmlFor="phone">Phone</label>
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          value={formData.phone}
-          onChange={handleChange}
-          placeholder="Enter your phone number"
-        />
-      </div>
+      {/* Phone Field */}
+    
+          <PhoneInput
+            id="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handlePhoneChange}
+            placeholder="Enter your phone number"
+            defaultCountry="US"
+          />
+
 
       {/* Submit Button */}
-      <button type="submit">{btnTitle}</button>
+      <Button type="submit">{btnTitle}</Button>
     </form>
   );
 };

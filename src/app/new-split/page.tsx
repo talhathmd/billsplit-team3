@@ -2,6 +2,7 @@
 import { UploadButton } from "@uploadthing/react";
 import { useState } from "react";
 import Tesseract from "tesseract.js";
+import { Button } from "@/components/ui/button";
 
 
 export default function UploadBill() {
@@ -39,15 +40,15 @@ export default function UploadBill() {
         endpoint="billImage"
         onClientUploadComplete={handleImageUpload}
         onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
-        className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors duration-200 cursor-pointer"
+        className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
       />
       {imageUrl && (
-        <button
+        <Button
           onClick={() => window.open(imageUrl, '_blank')}
-          className="mt-4 px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors duration-200"
+          className="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200"
         >
           View Original Bill
-        </button>
+        </Button>
       )}
       {extractedText && (
         <textarea

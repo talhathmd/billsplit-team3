@@ -11,7 +11,7 @@ export default function Dashboard() {
       </SignedOut>
 
       <SignedIn>
-        <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+        <div className="w-full max-w-2xl rounded-lg shadow-md p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-emerald-600">Dashboard</h1>
