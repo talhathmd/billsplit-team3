@@ -26,7 +26,7 @@ export default function Dashboard() {
                 <FaCamera />
               </div>
             </Link>
-            <Link href="/dashboard/history" className="block">
+            <Link href="/history" className="block">
               <div className="p-5 bg-emerald-600 text-white rounded-lg shadow-md text-center font-semibold hover:bg-emerald-700 transition-all">
                 History
               </div>
