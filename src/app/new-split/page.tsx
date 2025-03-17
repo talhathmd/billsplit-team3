@@ -1,38 +1,38 @@
 "use client";
 import { UploadButton } from "@uploadthing/react";
 import { useState } from "react";
-import Tesseract from "tesseract.js";
 import { Button } from "@/components/ui/button";
-
 
 export default function UploadBill() {
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const handleImageUpload = async (res: any) => {
+    console.log("Upload Response:", res);  // Log the response
+  
     if (res && res[0]) {
       const uploadedImageUrl = res[0].url;
       setImageUrl(uploadedImageUrl);
-
-      // Call the API to process the image
-      const response = await fetch('/api/process-image', {
-        method: 'POST',
+  
+      // Send image URL to the API for Google Vision processing
+      const response = await fetch("/api/extract-text", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ imageUrl: uploadedImageUrl }),
       });
-
-      const { image: base64Image } = await response.json();
-      const buffer = Buffer.from(base64Image, 'base64');
-
-      // Perform OCR on the processed image
-      const { data } = await Tesseract.recognize(buffer, "eng", {
-        logger: (m) => console.log(m), // Log progress
-      });
-      setExtractedText(data.text);
+  
+      if (!response.ok) {
+        console.error("Failed to process image");
+        return;
+      }
+  
+      const { text } = await response.json();
+      setExtractedText(text);
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center space-y-4 mt-8">
@@ -44,7 +44,7 @@ export default function UploadBill() {
       />
       {imageUrl && (
         <Button
-          onClick={() => window.open(imageUrl, '_blank')}
+          onClick={() => window.open(imageUrl, "_blank")}
           className="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200"
         >
           View Original Bill
