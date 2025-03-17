@@ -1,7 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 import Image from "next/image";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export default function SignInPage() {
   return (
