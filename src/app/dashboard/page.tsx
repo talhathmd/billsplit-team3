@@ -31,9 +31,9 @@ export default function Dashboard() {
                 History
               </div>
             </Link>
-            <Link href="/dashboard/received" className="block">
+            <Link href="/view-contact" className="block">
               <div className="p-5 bg-emerald-600 text-white rounded-lg shadow-md text-center font-semibold hover:bg-emerald-700 transition-all">
-                Received
+                Contacts
               </div>
             </Link>
             <Link href="/dashboard/settings" className="block">

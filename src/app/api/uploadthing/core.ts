@@ -8,7 +8,7 @@ const auth = (req: Request) => ({ id: "fakeId" }); // Fake auth function
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   // Define a route for image uploads
-  imageUploader: f({ image: { maxFileSize: "4MB" } })
+  imageUploader: f({ image: { maxFileSize: "8MB" } })
     .middleware(async ({ req }) => {
       const user = await auth(req);
       if (!user) throw new UploadThingError("Unauthorized");
@@ -33,7 +33,7 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId };
     }),
 
-  billImage: f({ image: { maxFileSize: "4MB" } })
+  billImage: f({ image: { maxFileSize: "8MB" } })
     .middleware(async ({ req }) => {
       const user = await auth(req);
       if (!user) throw new UploadThingError("Unauthorized");
