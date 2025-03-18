@@ -1,4 +1,4 @@
-import { NextResponse } from "/next/server";
+import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import billItem from "@/lib/models/items.model";
 
