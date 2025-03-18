@@ -56,7 +56,7 @@ export default function UploadBill() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-2xl p-6 bg-white shadow-lg rounded-lg">
+      <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-2xl p-6 bg-white shadow-lg rounded-lg overflow-auto flex-grow">
         <UploadButton
           endpoint="billImage"
           onClientUploadComplete={handleImageUpload}
@@ -74,7 +74,7 @@ export default function UploadBill() {
         )}
 
         {fullResponse && (
-          <div className="flex flex-col gap-1 mt-4 w-full">
+          <div className="flex flex-col gap-1 mt-4 w-full h-full">
             <h2 className="font-bold text-lg mb-2">{fullResponse.storeName || "Store Name"}</h2>
             <p>{fullResponse.address || "Address not available"}</p>
             <p>{fullResponse.phoneNumber || "Phone number not available"}</p>
@@ -107,51 +107,53 @@ export default function UploadBill() {
               <CardHeader>
                 <CardTitle>Total</CardTitle>
               </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <span className="flex-grow">
-                      <strong>Subtotal:</strong>
-                    </span>
-                    <span className="flex items-center">
-                      <span className="mr-2">$</span>
-                      <Input
-                        type="number"
-                        defaultValue={fullResponse.subtotal ? fullResponse.subtotal.replace('$', '') : "0"}
-                        className="w-24 border rounded mx-2"
-                      />
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="flex-grow">
-                      <strong>SalesTax:</strong>
-                    </span>
-                    <span className="flex items-center">
-                      <span className="mr-2">$</span>
-                      <Input
-                        type="number"
-                        defaultValue={fullResponse.salesTax ? fullResponse.salesTax.replace('$', '') : "0"}
-                        className="w-24 border rounded mx-2"
-                      />
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="flex-grow">
-                      <strong>Total:</strong>
-                    </span>
-                    <span className="flex items-center">
-                      <span className="mr-2">$</span>
-                      <Input
-                        type="number"
-                        defaultValue={fullResponse.total ? fullResponse.total.replace('$', '') : "0"}
-                        className="w-24 border rounded mx-2"
-                      />
-                    </span>
-                  </div>
-                </CardContent>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <span className="flex-grow">
+                    <strong>Subtotal:</strong>
+                  </span>
+                  <span className="flex items-center">
+                    <span className="mr-2">$</span>
+                    <Input
+                      type="number"
+                      defaultValue={fullResponse.subtotal ? fullResponse.subtotal.replace('$', '') : "0"}
+                      className="w-24 border rounded mx-2"
+                    />
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex-grow">
+                    <strong>SalesTax:</strong>
+                  </span>
+                  <span className="flex items-center">
+                    <span className="mr-2">$</span>
+                    <Input
+                      type="number"
+                      defaultValue={fullResponse.salesTax ? fullResponse.salesTax.replace('$', '') : "0"}
+                      className="w-24 border rounded mx-2"
+                    />
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex-grow">
+                    <strong>Total:</strong>
+                  </span>
+                  <span className="flex items-center">
+                    <span className="mr-2">$</span>
+                    <Input
+                      type="number"
+                      defaultValue={fullResponse.total ? fullResponse.total.replace('$', '') : "0"}
+                      className="w-24 border rounded mx-2"
+                    />
+                  </span>
+                </div>
+              </CardContent>
             </Card>
           </div>
         )}
       </div>
     </div>
+  
+
   );
 }
