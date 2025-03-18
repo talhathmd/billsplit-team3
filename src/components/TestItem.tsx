@@ -26,7 +26,7 @@ export default function TestItem() {
             totalAmount: 50,
             participants: ["John", "Jane"],
             status: "paid",
-            createdAt: "2025-03-16T12:00:00Z",
+            createdAt: "Feb 02, 2025",
         },
         {
             _id: "2",
@@ -35,7 +35,7 @@ export default function TestItem() {
             totalAmount: 100,
             participants: ["Alice", "Bob"],
             status: "pending",
-            createdAt: "2025-03-17T14:00:00Z",
+            createdAt: "Jan 31, 2025",
         },
         {
             _id: "3",
@@ -44,7 +44,7 @@ export default function TestItem() {
             totalAmount: 75,
             participants: ["Charlie", "Dave"],
             status: "paid",
-            createdAt: "2025-03-18T16:00:00Z",
+            createdAt: "Dec 28, 2024",
         },
     ];
 
