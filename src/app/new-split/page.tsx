@@ -10,6 +10,45 @@ export default function UploadBill() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [fullResponse, setFullResponse] = useState<any | null>(null); // Store full Cloudflare response
 
+  // create a new bill
+  const createBill = async () => {
+    if (!imageUrl || !fullResponse?.total) {
+      alert("Missing image or total amount");
+      return;
+    }
+
+    try {
+      const totalAmount = parseFloat(fullResponse.total.replace("$", ""));
+
+      // temporary participants!!! replace with actual contact _id strings !!! ***
+      const participants = ["123456789", "3985474363927"];
+
+      const res = await fetch("/api/add-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl,
+          totalAmount,
+          participants,
+          status: "pending"
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Bill created successfully!");
+        console.log("New Bill:", data);
+      } else {
+        console.error("Failed to create bills:", data);
+        alert("Error creating bill.");
+      }
+    } catch (error) {
+      console.error("Error in createBill:", error);
+      alert("Something went wrong.");
+    }
+  };
+
   const handleImageUpload = async (res: any) => {
     console.log("Upload Response:", res);
 
@@ -149,6 +188,12 @@ export default function UploadBill() {
                 </div>
               </CardContent>
             </Card>
+            <Button 
+              className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={createBill}
+            >
+              Creat Bill
+            </Button>
           </div>
         )}
       </div>

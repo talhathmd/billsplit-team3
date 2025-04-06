@@ -5,7 +5,7 @@ const BillSchema = new mongoose.Schema(
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // User who uploaded
     imageUrl: String, // Bill image (stored in Firebase/AWS)
     totalAmount: Number, // Total bill amount
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // People involved
+    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "Contact" }], // People involved
     status: {
       type: String,
       enum: ["pending", "paid"],
@@ -15,4 +15,6 @@ const BillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Bill || mongoose.model("Bill", BillSchema);
+const Bill = mongoose.models.Bill || mongoose.model("Bill", BillSchema);
+
+export default Bill;
