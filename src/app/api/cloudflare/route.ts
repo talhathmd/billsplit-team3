@@ -15,7 +15,7 @@ interface BillDetails {
     price: string;
   }[];
   subtotal?: string;
-  salesTax?: string;
+  totalTax?: string;
   total?: string;
   paymentMethod?: string;
 }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const messages = [
       {
         role: "system",
-        content: "Extract data about a bill. If unsure keep empty",
+        content: "Extract data about a bill. If unsure keep empty, add all taxes to total tax",
       },
       {
         role: "user",
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
               },
             },
             subtotal: { type: "string" },
-            salesTax: { type: "string" },
+            totalTax: { type: "string" },
             total: { type: "string" },
           },
         },

@@ -1,15 +1,14 @@
+'use client';
+
 import BillHistoryItem from "@/components/BillHistoryItem";
-import TestItem from "@/components/TestItem";
 
 export default function History() {
     return (
-        <>
-            <div className="w-full min-h-screen bg-white flex flex-col pt-5">
-                <div className="w-full px-4">
-                    <h1 className="text-5xl font-bold text-center pb-10">HISTORY</h1>
-                    <TestItem />
-                </div>
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-8 text-emerald-600">Bill History</h1>
+            <div className="bg-white rounded-lg shadow-lg">
+                <BillHistoryItem />
             </div>
-        </>
+        </div>
     );
 }

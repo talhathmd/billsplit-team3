@@ -1,4 +1,12 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+export interface ContactDocument extends Document {
+  _id: string;
+  clerkId: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
 
 const contactSchema = new mongoose.Schema({
   clerkId: {
@@ -19,6 +27,6 @@ const contactSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-const Contact = mongoose.models.Contact || mongoose.model('Contact', contactSchema);
+const Contact = mongoose.models.Contact || mongoose.model<ContactDocument>('Contact', contactSchema);
 
 export default Contact; 

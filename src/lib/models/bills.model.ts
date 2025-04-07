@@ -1,18 +1,49 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from 'mongoose';
 
-const BillSchema = new mongoose.Schema(
-  {
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // User who uploaded
-    imageUrl: String, // Bill image (stored in Firebase/AWS)
-    totalAmount: Number, // Total bill amount
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // People involved
-    status: {
-      type: String,
-      enum: ["pending", "paid"],
-      default: "pending",
-    },
+export interface BillItem {
+  name: string;
+  quantity: number;
+  price: number;
+  assignedContacts: string[]; // Array of contact IDs
+}
+
+export interface BillDocument extends Document {
+  _id: string;
+  clerkId: string;
+  storeName: string;
+  address: string;
+  phoneNumber: string;
+  date: string;
+  time: string;
+  items: BillItem[];
+  subtotal: number;
+  totalTax: number;
+  total: number;
+  imageUrl: string;
+}
+
+const billSchema = new mongoose.Schema({
+  clerkId: {
+    type: String,
+    required: true,
   },
-  { timestamps: true }
-);
+  storeName: String,
+  address: String,
+  phoneNumber: String,
+  date: String,
+  time: String,
+  items: [{
+    name: String,
+    quantity: Number,
+    price: Number,
+    assignedContacts: [String]
+  }],
+  subtotal: Number,
+  totalTax: Number,
+  total: Number,
+  imageUrl: String
+}, { timestamps: true });
 
-export default mongoose.models.Bill || mongoose.model("Bill", BillSchema);
+const Bill = mongoose.models.Bill || mongoose.model<BillDocument>('Bill', billSchema);
+
+export default Bill;
