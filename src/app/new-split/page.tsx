@@ -184,7 +184,15 @@ export default function UploadBill() {
       });
 
       const data = await response.json();
-      console.log("Save bill response:", data); // Debug log
+      
+      if (!response.ok) {
+        if (response.status === 409) {
+          // Handle duplicate bill error
+          alert(data.error || "This bill appears to be a duplicate.");
+          return;
+        }
+        throw new Error(data.error || "Failed to save bill");
+      }
 
       if (data.success) {
         // Calculate personal bills and add contact names
@@ -205,8 +213,6 @@ export default function UploadBill() {
         setPersonalBills(personalBills);
         setSavedBillId(data._id); // Change this from data.billId to data._id
         setShowConfirmation(true);
-      } else {
-        alert("Failed to save bill");
       }
     } catch (error) {
       console.error("Error saving bill:", error);

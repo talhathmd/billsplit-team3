@@ -39,6 +39,7 @@ export async function GET(
     const personalBill = {
         storeName: bill.storeName,
         date: bill.date,
+        imageUrl: bill.imageUrl,
         items: bill.items
             .filter((item: BillItem) => item.assignedContacts.includes(shareLink.contactId))
             .map((item: BillItem) => {
@@ -62,6 +63,7 @@ export async function GET(
         subtotal,
         taxShare,
         total: subtotal + taxShare,
-        contactName: contact.name
+        contactName: contact.name,
+        imageUrl: bill.imageUrl
     });
 } 

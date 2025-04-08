@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 interface SharedBill {
     storeName: string;
     date: string;
+    imageUrl: string;
     items: {
         name: string;
         quantity: number;
@@ -82,6 +83,22 @@ export default function SharedBillPage() {
                         <h2 className="text-xl font-semibold">{bill.storeName}</h2>
                         <p className="text-gray-600">{new Date(bill.date).toLocaleDateString()}</p>
                     </div>
+
+                    {bill.imageUrl && (
+                        <div className="mb-6">
+                            <a 
+                                href={bill.imageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-500 hover:text-emerald-600 flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                </svg>
+                                View Original Receipt
+                            </a>
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         {bill.items.map((item, idx) => (
