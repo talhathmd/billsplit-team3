@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
-import billsModel from "@/lib/models/bills.model";
-
-const connectToDB = async () => {
-    if (mongoose.connections[0].readyState) return;
-    await mongoose.connect(process.env.MONGODB_URL || "");
-};
+import { currentUser } from "@clerk/nextjs/server";
+import { connectToDB } from "@/lib/mongoose";
+import Bill from "@/lib/models/bills.model";
 
 export async function GET() {
     try {
         await connectToDB();
-        const bills = await billsModel.find();
-        return NextResponse.json(bills, { status: 200 });
+        const clerkUser = await currentUser();
+
+        if (!clerkUser) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const bills = await Bill.find({ clerkId: clerkUser.id });
+        return NextResponse.json(bills);
     } catch (error) {
-        return NextResponse.json({ message: "Error fetching bills" }, { status: 500 });
+        console.error("Error fetching bills:", error);
+        return NextResponse.json({ error: "Failed to fetch bills" }, { status: 500 });
     }
 }

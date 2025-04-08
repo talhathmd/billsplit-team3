@@ -18,9 +18,15 @@ export async function POST(req: Request) {
       clerkId: clerkUser.id
     });
 
-    return NextResponse.json({ success: true, bill });
+    return NextResponse.json({ 
+      success: true, 
+      _id: bill._id
+    });
   } catch (error) {
     console.error("Error saving bill:", error);
-    return NextResponse.json({ success: false, message: "Failed to save bill" }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to save bill" 
+    }, { status: 500 });
   }
 } 
