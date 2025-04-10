@@ -82,52 +82,56 @@ export default function UploadBill() {
   const { user } = useUser();
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [fullResponse, setFullResponse] = useState<any | null>(null); // Store full Cloudflare response
+  const [fullResponse, setFullResponse] = useState<any | null>(null);
   const [itemAssignments, setItemAssignments] = useState<ItemAssignment[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [savedBillId, setSavedBillId] = useState<string | null>(null);
   const [personalBills, setPersonalBills] = useState<PersonalBill[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleImageUpload = async (res: any) => {
-    console.log("Upload Response:", res);
-
     if (res && res[0]) {
+      setIsProcessing(true);
       const uploadedImageUrl = res[0].url;
       setImageUrl(uploadedImageUrl);
 
-      // Send image URL to the API for Google Vision processing
-      const response = await fetch("/api/extract-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: uploadedImageUrl }),
-      });
+      try {
+        // Send image URL to the API for Google Vision processing
+        const response = await fetch("/api/extract-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: uploadedImageUrl }),
+        });
 
-      if (!response.ok) {
-        console.error("Failed to process image");
-        return;
-      }
+        if (!response.ok) {
+          throw new Error("Failed to process image");
+        }
 
-      const { text } = await response.json();
-      setExtractedText(text);
+        const { text } = await response.json();
+        setExtractedText(text);
 
-      // Send extracted text to Cloudflare
-      const cloudflareResponse = await fetch("/api/cloudflare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extractedText: text }),
-      });
+        // Send extracted text to Cloudflare
+        const cloudflareResponse = await fetch("/api/cloudflare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ extractedText: text }),
+        });
 
-      if (!cloudflareResponse.ok) {
-        console.error("Failed to retrieve data from Cloudflare");
-        return;
-      }
+        if (!cloudflareResponse.ok) {
+          throw new Error("Failed to retrieve data from Cloudflare");
+        }
 
-      const data = await cloudflareResponse.json();
-      console.log("Cloudflare API Response:", data); // Log the response
+        const data = await cloudflareResponse.json();
+        console.log("Cloudflare API Response:", data);
 
-      // Assuming the response structure is { result: { response: { ... } } }
-      if (data.result && data.result.response) {
-        setFullResponse(data.result.response); // Store the structured response
+        if (data.result && data.result.response) {
+          setFullResponse(data.result.response);
+        }
+      } catch (error) {
+        console.error("Error processing image:", error);
+        alert("Failed to process image. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
@@ -230,6 +234,13 @@ export default function UploadBill() {
             onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
             className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
           />
+          
+          {isProcessing && (
+            <div className="flex items-center gap-2 text-emerald-500">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-500"></div>
+              <span>Processing receipt...</span>
+            </div>
+          )}
           
           {imageUrl && (
             <Button
