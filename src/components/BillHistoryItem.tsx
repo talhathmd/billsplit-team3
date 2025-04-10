@@ -46,6 +46,7 @@ export default function BillHistoryItem() {
     const [showPersonalBills, setShowPersonalBills] = useState(false);
     const [personalBills, setPersonalBills] = useState<PersonalBill[]>([]);
     const [copiedLinks, setCopiedLinks] = useState<{ [key: string]: boolean }>({});
+    const [loading, setLoading] = useState(false);
 
     const fetchContacts = async () => {
         try {
@@ -163,39 +164,33 @@ export default function BillHistoryItem() {
 
     const generateShareLink = async (billId: string, contactId: string) => {
         try {
+            setLoading(true);
             const response = await fetch('/api/create-share-link', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    billId,
-                    contactId,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billId, contactId }),
             });
+            
+            if (!response.ok) {
+                throw new Error('Failed to generate share link');
+            }
             
             const data = await response.json();
             if (data.success) {
                 const shareLink = `${window.location.origin}/shared-bill/${data.shareId}`;
                 await navigator.clipboard.writeText(shareLink);
-                
-                // Show copied status
-                setCopiedLinks(prev => ({
-                    ...prev,
-                    [contactId]: true
-                }));
+                setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
                 
                 // Reset copied status after 3 seconds
                 setTimeout(() => {
-                    setCopiedLinks(prev => ({
-                        ...prev,
-                        [contactId]: false
-                    }));
+                    setCopiedLinks(prev => ({ ...prev, [contactId]: false }));
                 }, 3000);
             }
         } catch (error) {
             console.error('Error generating share link:', error);
-            alert('Failed to generate share link');
+            alert('Failed to generate share link. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -344,7 +339,6 @@ export default function BillHistoryItem() {
 
     return (
         <div className="p-4">
-            <h2 className="text-2xl font-bold mb-6">Bill History</h2>
             <div className="space-y-4">
                 {bills.map((bill) => (
                     <div key={bill._id} className="bg-white rounded-lg shadow-md p-4">

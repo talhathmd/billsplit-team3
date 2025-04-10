@@ -29,10 +29,19 @@ export default function SelectContact({ onSelect, placeholder = "Select a contac
 
   useEffect(() => {
     const fetchContacts = async () => {
+      // Check if contacts are in localStorage
+      const cachedContacts = localStorage.getItem('contacts');
+      if (cachedContacts) {
+        setContacts(JSON.parse(cachedContacts));
+        return;
+      }
+
       const response = await fetch("/api/get-contacts");
       const data = await response.json();
       if (data.success) {
         setContacts(data.contacts);
+        // Cache contacts
+        localStorage.setItem('contacts', JSON.stringify(data.contacts));
       }
     };
 

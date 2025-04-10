@@ -14,6 +14,16 @@ export async function POST(req: Request) {
 
         const { billId, contactId } = await req.json();
 
+        // Check if share link already exists
+        const existingLink = await ShareLink.findOne({ billId, contactId });
+        if (existingLink) {
+            return NextResponse.json({ 
+                success: true, 
+                shareId: existingLink.shareId 
+            });
+        }
+
+        // Create new share link if none exists
         const shareLink = await ShareLink.create({
             billId,
             contactId,
