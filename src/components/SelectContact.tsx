@@ -22,31 +22,27 @@ interface ContactDocument extends Document {
 interface SelectContactProps {
   onSelect: (contact: ContactDocument | null) => void;
   placeholder?: string;
+  refreshKey?: number;
 }
 
-export default function SelectContact({ onSelect, placeholder = "Select a contact" }: SelectContactProps) {
+export default function SelectContact({ 
+  onSelect, 
+  placeholder = "Select a contact",
+  refreshKey = 0 
+}: SelectContactProps) {
   const [contacts, setContacts] = useState<ContactDocument[]>([]);
 
   useEffect(() => {
     const fetchContacts = async () => {
-      // Check if contacts are in localStorage
-      const cachedContacts = localStorage.getItem('contacts');
-      if (cachedContacts) {
-        setContacts(JSON.parse(cachedContacts));
-        return;
-      }
-
       const response = await fetch("/api/get-contacts");
       const data = await response.json();
       if (data.success) {
         setContacts(data.contacts);
-        // Cache contacts
-        localStorage.setItem('contacts', JSON.stringify(data.contacts));
       }
     };
 
     fetchContacts();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <Select onValueChange={(value: string) => {

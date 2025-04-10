@@ -7,26 +7,42 @@ import { currentUser } from "@clerk/nextjs/server"; // Import Clerk's currentUse
 export async function POST(req: Request) {
   try {
     await connectToDB();
-    const { name, email, phone } = await req.json();
-    const clerkUser = await currentUser(); // Get the current user from Clerk
-
+    const clerkUser = await currentUser();
+    
     if (!clerkUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Create a new contact
-    const newContact = new Contact({
-      clerkId: clerkUser.id, // Use the Clerk ID
-      name,
-      email,
-      phone,
+    const body = await req.json();
+
+    // Check for existing contact with same email
+    const existingContact = await Contact.findOne({
+      clerkId: clerkUser.id,
+      email: body.email
     });
 
-    await newContact.save();
+    if (existingContact) {
+      return NextResponse.json({
+        success: false,
+        error: "A contact with this email already exists"
+      }, { status: 409 });
+    }
 
-    return NextResponse.json({ success: true, message: "Contact added successfully!" });
+    // If no duplicate found, create new contact
+    const contact = await Contact.create({
+      ...body,
+      clerkId: clerkUser.id
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      contact 
+    });
   } catch (error) {
-    console.error("Error adding contact:", error);
-    return NextResponse.json({ success: false, message: "Failed to add contact." }, { status: 500 });
+    console.error("Error saving contact:", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to save contact" 
+    }, { status: 500 });
   }
 } 

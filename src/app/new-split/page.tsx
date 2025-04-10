@@ -88,6 +88,7 @@ export default function UploadBill() {
   const [savedBillId, setSavedBillId] = useState<string | null>(null);
   const [personalBills, setPersonalBills] = useState<PersonalBill[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [contactRefreshKey, setContactRefreshKey] = useState(0);
 
   const handleImageUpload = async (res: any) => {
     if (res && res[0]) {
@@ -154,6 +155,11 @@ export default function UploadBill() {
       
       return newAssignments;
     });
+  };
+
+  // Add this function to refresh contacts
+  const refreshContacts = () => {
+    setContactRefreshKey(prev => prev + 1);
   };
 
   const handleSendBill = async () => {
@@ -281,6 +287,7 @@ export default function UploadBill() {
                         <SelectContact 
                           onSelect={(contact) => handleContactSelect(index, contact)}
                           placeholder="Assign to contact"
+                          refreshKey={contactRefreshKey}
                         />
                       </div>
                       {/* Display assigned contacts */}
