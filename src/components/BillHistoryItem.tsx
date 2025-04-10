@@ -164,6 +164,7 @@ export default function BillHistoryItem() {
 
     const generateShareLink = async (billId: string, contactId: string) => {
         try {
+            setLoading(true); // Add loading state
             const response = await fetch('/api/create-share-link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -178,36 +179,72 @@ export default function BillHistoryItem() {
             if (data.success) {
                 const shareLink = `${window.location.origin}/shared-bill/${data.shareId}`;
                 
-                // Try clipboard API first
+                // Create a temporary input element
+                const input = document.createElement('input');
+                input.value = shareLink;
+                input.style.position = 'fixed';
+                input.style.opacity = '0';
+                document.body.appendChild(input);
+                
+                // Select and copy
+                input.select();
+                input.setSelectionRange(0, 99999);
+                
                 try {
+                    // Try modern clipboard API first
                     await navigator.clipboard.writeText(shareLink);
-                    setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
                 } catch (clipboardError) {
-                    // Fallback: Create a temporary input element
-                    const input = document.createElement('input');
-                    input.value = shareLink;
-                    document.body.appendChild(input);
-                    input.select();
-                    
-                    try {
-                        document.execCommand('copy');
-                        setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
-                    } catch (execError) {
-                        // If both methods fail, show the link in an alert
-                        alert(`Share link: ${shareLink}`);
-                    }
-                    
-                    document.body.removeChild(input);
+                    // Fallback to execCommand
+                    document.execCommand('copy');
                 }
                 
-                // Reset copied status after 3 seconds
+                // Remove the input
+                document.body.removeChild(input);
+                
+                // Show success message
+                setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
+                
+                // Show toast notification
+                const toast = document.createElement('div');
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                toast.style.color = 'white';
+                toast.style.padding = '10px 20px';
+                toast.style.borderRadius = '5px';
+                toast.style.zIndex = '1000';
+                toast.textContent = 'Link copied to clipboard!';
+                document.body.appendChild(toast);
+                
+                // Remove toast after 3 seconds
                 setTimeout(() => {
+                    document.body.removeChild(toast);
                     setCopiedLinks(prev => ({ ...prev, [contactId]: false }));
                 }, 3000);
             }
         } catch (error) {
             console.error('Error generating share link:', error);
-            alert('Failed to generate share link. Please try again.');
+            // Show error toast
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '5px';
+            toast.style.zIndex = '1000';
+            toast.textContent = 'Failed to copy link. Please try again.';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -242,16 +279,22 @@ export default function BillHistoryItem() {
                                 <Button
                                     onClick={() => generateShareLink(selectedBill._id, personalBill.contactId)}
                                     className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-2"
+                                    disabled={loading}
                                 >
-                                    {copiedLinks[personalBill.contactId] ? (
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            <span>Copying...</span>
+                                        </>
+                                    ) : copiedLinks[personalBill.contactId] ? (
                                         <>
                                             <IoMdCheckmark className="w-4 h-4" />
-                                            Copied!
+                                            <span>Copied!</span>
                                         </>
                                     ) : (
                                         <>
                                             <IoMdCopy className="w-4 h-4" />
-                                            Copy Share Link
+                                            <span>Copy Share Link</span>
                                         </>
                                     )}
                                 </Button>
