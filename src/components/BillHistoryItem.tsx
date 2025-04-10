@@ -164,7 +164,6 @@ export default function BillHistoryItem() {
 
     const generateShareLink = async (billId: string, contactId: string) => {
         try {
-            setLoading(true);
             const response = await fetch('/api/create-share-link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -178,8 +177,28 @@ export default function BillHistoryItem() {
             const data = await response.json();
             if (data.success) {
                 const shareLink = `${window.location.origin}/shared-bill/${data.shareId}`;
-                await navigator.clipboard.writeText(shareLink);
-                setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
+                
+                // Try clipboard API first
+                try {
+                    await navigator.clipboard.writeText(shareLink);
+                    setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
+                } catch (clipboardError) {
+                    // Fallback: Create a temporary input element
+                    const input = document.createElement('input');
+                    input.value = shareLink;
+                    document.body.appendChild(input);
+                    input.select();
+                    
+                    try {
+                        document.execCommand('copy');
+                        setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
+                    } catch (execError) {
+                        // If both methods fail, show the link in an alert
+                        alert(`Share link: ${shareLink}`);
+                    }
+                    
+                    document.body.removeChild(input);
+                }
                 
                 // Reset copied status after 3 seconds
                 setTimeout(() => {
@@ -189,8 +208,6 @@ export default function BillHistoryItem() {
         } catch (error) {
             console.error('Error generating share link:', error);
             alert('Failed to generate share link. Please try again.');
-        } finally {
-            setLoading(false);
         }
     };
 
