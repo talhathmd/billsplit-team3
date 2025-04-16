@@ -4,11 +4,6 @@ import { Button } from "@/components/ui/button";
 
 export const runtime = "nodejs";
 
-export const metadata = {
-  verification: {
-    google: 'lvLILYWSuJBjSZnVYxQEOiHmpQliH2GBhV9svlnHc_8'
-  },
-};
 
 export default function Home() {
   return (
