@@ -23,7 +23,8 @@ interface SharedBill {
     total: number;
     contactName: string;
     contactId: string ,
-    isCurrentUser?: boolean;
+    isCurrentUser?: boolean,
+    isMyBill: boolean;
 }
 
 export default function SharedBillPage() {
@@ -47,6 +48,8 @@ export default function SharedBillPage() {
                     throw new Error('Failed to fetch bill');
                 }
                 const data = await response.json();
+                console.log("API response:", data); // Add this to see what's returned
+                console.log("isCurrentUser in response:", data.isCurrentUser);
                 setBill(data);
             } catch (error) {
                 setError('Failed to load bill details');
@@ -88,14 +91,14 @@ export default function SharedBillPage() {
                     <div className="flex items-center gap-2 mb-6">
                         <IoPerson className="w-6 h-6 text-emerald-500" />
                         <h1 className="text-2xl font-bold">
-                            {bill.isCurrentUser ? "Your" : `${bill.contactName}'s`} Bill
+                            {bill.contactName === "Me" ? "Your Bill" : `${bill.contactName}'s Bill`}
                         </h1>
                     </div>
 
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold">{bill.storeName}</h2>
                         <p className="text-gray-600">{new Date(bill.date).toLocaleDateString()}</p>
-                    </div>
+                    </div> 
 
                     {bill.imageUrl && (
                         <div className="mb-6">

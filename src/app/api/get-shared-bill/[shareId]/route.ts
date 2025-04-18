@@ -62,7 +62,33 @@ export async function GET(
     const proportion = subtotal / bill.subtotal;
     const taxShare = bill.totalTax * proportion;
 
-    const isCurrentUser = contact.clerkId === userId; // check if contact belongs to current user
+    const isCurrentUser = 
+    (shareLink.contactId.startsWith("user_") && shareLink.contactId === userId) || 
+    (contact.clerkId && contact.clerkId === userId) || 
+    contact.name === "Me";
+
+    const isMyBill = (
+        userId && (
+          (shareLink.contactId === userId) ||
+          (contact.clerkId === userId) ||
+          (contact.name === "Me")
+        )
+      ) ? true : false;
+
+    console.log("Contact clerkId:", contact.clerkId);
+    console.log("Current userId:", userId);
+    console.log("Are they equal?", contact.clerkId === userId);
+    console.log("isCurrentUser flag:", isCurrentUser);
+
+    console.log("Final response:", {
+  ...personalBill,
+  subtotal,
+  taxShare,
+  total: subtotal + taxShare,
+  contactName: contact.name,
+  contactId: contact._id.toString(),
+  isCurrentUser: isCurrentUser
+});
 
     return NextResponse.json({
         ...personalBill,
@@ -71,7 +97,6 @@ export async function GET(
         total: subtotal + taxShare,
         contactName: contact.name,
         contactId: contact._id.toString(),
-        isCurrentUser: isCurrentUser,
-        imageUrl: bill.imageUrl
+        isCurrentUser: isCurrentUser
     });
 } 
