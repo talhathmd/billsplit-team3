@@ -1,5 +1,13 @@
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/react"
 import "./globals.css";
+
+export const metadata = {
+  verification: {
+    google: 'lvLILYWSuJBjSZnVYxQEOiHmpQliH2GBhV9svlnHc_8'
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -8,7 +16,9 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl="/">
       <html lang="en">
-        <body>{children}</body>
+        <body>{children}
+          <Analytics />
+        </body>
       </html>
     </ClerkProvider>
   );
