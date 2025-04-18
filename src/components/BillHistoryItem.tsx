@@ -354,11 +354,24 @@ export default function BillHistoryItem() {
         }
 
         return (
-            <div className="space-y-4">
-                <div className="flex justify-between text-gray-600">
-                    <span>Date: {new Date(selectedBill.date).toLocaleDateString()}</span>
-                    <span>Time: {selectedBill.time}</span>
+            <div className="flex flex-col">
+                {/* Close button row */}
+                <div className="flex justify-end">
+                    <button
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                    aria-label="Close"
+                    >
+                    &times;
+                    </button>
                 </div>
+
+                {/* Date and Time row */}
+                <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-500">Date: April 15</span>
+                    <span className="text-sm text-gray-500">Time: 3:00 PM</span>
+                </div>
+               
 
                 <div className="border-t pt-4">
                     <h3 className="font-semibold mb-2">Items</h3>
