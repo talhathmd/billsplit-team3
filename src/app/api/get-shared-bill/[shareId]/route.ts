@@ -3,6 +3,7 @@ import { connectToDB } from "@/lib/mongoose";
 import ShareLink from "@/lib/models/sharelink.model";
 import Bill from "@/lib/models/bills.model";
 import Contact from "@/lib/models/contact.model";
+import { auth } from "@clerk/nextjs/server";
 
 interface BillItem {
     name: string;
@@ -15,6 +16,8 @@ export async function GET(
     request: Request,
     { params }: { params: { shareId: string } }
 ) {
+    const { userId } = auth(); // get the current user's ID from Clerk
+
     await connectToDB();
     
     // Access params.shareId directly in the query
@@ -29,11 +32,12 @@ export async function GET(
         return NextResponse.json({ error: "Bill not found" }, { status: 404 });
     }
 
-    // Find the contact to get their name
+    // Find the contact to get their name *!*!*!**!*!*!**!!**!*!*!*!**!*!*!*!*!*
     const contact = await Contact.findById(shareLink.contactId);
     if (!contact) {
         return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
+
 
     // Find the items assigned to this contact
     const personalBill = {
@@ -58,12 +62,41 @@ export async function GET(
     const proportion = subtotal / bill.subtotal;
     const taxShare = bill.totalTax * proportion;
 
+    const isCurrentUser = 
+    (shareLink.contactId.startsWith("user_") && shareLink.contactId === userId) || 
+    (contact.clerkId && contact.clerkId === userId) || 
+    contact.name === "Me";
+
+    const isMyBill = (
+        userId && (
+          (shareLink.contactId === userId) ||
+          (contact.clerkId === userId) ||
+          (contact.name === "Me")
+        )
+      ) ? true : false;
+
+    console.log("Contact clerkId:", contact.clerkId);
+    console.log("Current userId:", userId);
+    console.log("Are they equal?", contact.clerkId === userId);
+    console.log("isCurrentUser flag:", isCurrentUser);
+
+    console.log("Final response:", {
+  ...personalBill,
+  subtotal,
+  taxShare,
+  total: subtotal + taxShare,
+  contactName: contact.name,
+  contactId: contact._id.toString(),
+  isCurrentUser: isCurrentUser
+});
+
     return NextResponse.json({
         ...personalBill,
         subtotal,
         taxShare,
         total: subtotal + taxShare,
         contactName: contact.name,
-        imageUrl: bill.imageUrl
+        contactId: contact._id.toString(),
+        isCurrentUser: isCurrentUser
     });
 } 

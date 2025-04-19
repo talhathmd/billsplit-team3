@@ -33,23 +33,31 @@ interface PersonalBill {
 }
 
 // Also add the calculatePersonalBills function before your component
-const calculatePersonalBills = (billData: any) => {
+const calculatePersonalBills = (billData: any, currentUserId: string) => {
     const personalBillsMap = new Map<string, PersonalBill>();
+
 
     // Initialize personal bills for each contact with assigned items
     billData.items.forEach((item: any, index: number) => {
-        const assignedContacts = item.assignedContacts || [];
+        let assignedContacts = item.assignedContacts || [];
+
+        // error check
+        if (assignedContacts.length === 0) return;
+
         const numPeopleSharing = assignedContacts.length;
-        if (numPeopleSharing === 0) return;
+       // if (numPeopleSharing === 0) return;
 
         const pricePerPerson = item.price / numPeopleSharing;
         const quantityPerPerson = item.quantity / numPeopleSharing;
 
         assignedContacts.forEach((contactId: string) => {
+          // replace "me" with the current user ID
+          const actualContactId = contactId === "me" ? currentUserId : contactId;
+
             if (!personalBillsMap.has(contactId)) {
                 personalBillsMap.set(contactId, {
                     contactId,
-                    contactName: "", // We'll update this later
+                    contactName: actualContactId === currentUserId ? "Me" : "", // We'll update this later -- "Me" for current user
                     items: [],
                     subtotal: 0,
                     taxShare: 0,
@@ -145,6 +153,13 @@ export default function UploadBill() {
   // Add this function to handle contact selection
   const handleContactSelect = (itemIndex: number, contact: ContactDocument | null) => {
     if (!contact) return;
+
+    // handle "ME" case
+    const contactId = contact._id === "me" && user ? user.id : contact._id;
+    const contactToSave = {
+      ...contact,
+      _id: contactId
+    };
     
     setItemAssignments(prev => {
       const newAssignments = [...prev];
@@ -171,18 +186,26 @@ export default function UploadBill() {
     if (!fullResponse || !user) return;
 
     const billData = {
-      clerkId: user.id, // Use the actual clerk ID
+      clerkId: user.id,
       storeName: fullResponse.storeName,
       address: fullResponse.address,
       phoneNumber: fullResponse.phoneNumber,
       date: fullResponse.date,
       time: fullResponse.time,
-      items: fullResponse.items.map((item: any, index: number) => ({
-        name: item.name,
-        quantity: item.quantity || 1,
-        price: parseFloat(item.price?.replace('$', '') || '0'),
-        assignedContacts: itemAssignments.find(a => a.itemIndex === index)?.contacts.map(c => c._id) || []
-      })),
+      items: fullResponse.items.map((item: any, index: number) => {
+        const assignment = itemAssignments.find(a => a.itemIndex === index);
+        const assignedContacts = assignment?.contacts.map(c => {
+          // Convert "me" to the actual user ID
+          return c._id === "me" ? user.id : c._id;
+        }) || [];
+        
+        return {
+          name: item.name,
+          quantity: item.quantity || 1,
+          price: parseFloat(item.price?.replace('$', '') || '0'),
+          assignedContacts: assignedContacts
+        };
+      }),
       subtotal: parseFloat(fullResponse.subtotal?.replace('$', '') || '0'),
       totalTax: parseFloat(fullResponse.totalTax?.replace('$', '') || '0'),
       total: parseFloat(fullResponse.total?.replace('$', '') || '0'),
@@ -213,7 +236,7 @@ export default function UploadBill() {
 
       if (data.success) {
         // Calculate personal bills and add contact names
-        const personalBills = calculatePersonalBills(billData);
+        const personalBills = calculatePersonalBills(billData, user.id);
         console.log("Calculated personal bills:", personalBills); // Debug log
         
         // Add contact names to personal bills
@@ -328,6 +351,7 @@ export default function UploadBill() {
                           onSelect={(contact) => handleContactSelect(index, contact)}
                           placeholder="Assign to contact"
                           refreshKey={contactRefreshKey}
+                          includeSelf={true}
                         />
                       </div>
                       {/* Display assigned contacts */}
