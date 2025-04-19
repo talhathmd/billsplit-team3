@@ -7,11 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Contact from "@/lib/models/contact.model";
-import { Document } from 'mongoose';
 import { useUser } from "@clerk/nextjs";
+import { Document } from "mongoose";
 
-// Define interface extending Document for type safety with Mongoose
+// Define interface
 interface ContactDocument extends Document {
   _id: string;
   clerkId: string;
@@ -24,7 +23,7 @@ interface SelectContactProps {
   onSelect: (contact: ContactDocument | null) => void;
   placeholder?: string;
   refreshKey?: number;
-  includeSelf?: boolean;                  // *add 'Me' to billItem assignment
+  includeSelf?: boolean;
 }
 
 export default function SelectContact({ 
@@ -35,26 +34,23 @@ export default function SelectContact({
 }: SelectContactProps) {
   const { user } = useUser();
   const [contacts, setContacts] = useState<ContactDocument[]>([]);
+  const [selectedValue, setSelectedValue] = useState<string>("");
 
   useEffect(() => {
     const fetchContacts = async () => {
       const response = await fetch("/api/get-contacts");
       const data = await response.json();
-
-      // contacts can either be from contactList or self assign
       let loadedContacts = data.contacts || [];
 
-      // handle self assign
       if (includeSelf && user) {
         const meContact = {
-          _id: "me", // me is the special identifier
+          _id: "me",
           clerkId: user.id,
           name: "Me",
-          email: user.emailAddress || "You" // displays (You) for user readability
+          email: user.emailAddresses?.[0]?.emailAddress || "You"
         } as ContactDocument;
 
-        // insert ME into loaded contacts (beginning of list)
-        loadedContacts = [meContact, ...loadedContacts]; 
+        loadedContacts = [meContact, ...loadedContacts];
       }
 
       if (Array.isArray(loadedContacts)) {
@@ -65,15 +61,27 @@ export default function SelectContact({
     fetchContacts();
   }, [refreshKey, includeSelf, user]);
 
-  return (
-    <Select onValueChange={(value: string) => {
+
+
+  const handleChange = (value: string) => {
+    if (value === "none") {
+      setSelectedValue("none");
+      onSelect(null); // unselect
+    } else {
+      setSelectedValue(value);
       const selectedContact = contacts.find(contact => contact._id === value);
       onSelect(selectedContact || null);
-    }}>
+    }
+  };
+
+
+  return (
+    <Select value={selectedValue} onValueChange={handleChange}>
       <SelectTrigger className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="none">— None —</SelectItem>
         {contacts.map((contact) => (
           <SelectItem key={contact._id} value={contact._id}>
             {contact.name} ({contact.email})
@@ -81,5 +89,6 @@ export default function SelectContact({
         ))}
       </SelectContent>
     </Select>
+
   );
-} 
+}

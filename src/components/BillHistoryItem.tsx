@@ -386,7 +386,9 @@ export default function BillHistoryItem() {
                                     <p className="font-medium">{item.name}</p>
                                     <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                                 </div>
-                                <p className="font-medium">${item.price.toFixed(2)}</p>
+                                <p className="font-medium">
+                                    ${typeof item.price === "number" ? item.price.toFixed(2) : "0.00"}
+                                </p>
                             </div>
                             {item.assignedContacts.length > 0 && (
                                 <div className="mt-1">

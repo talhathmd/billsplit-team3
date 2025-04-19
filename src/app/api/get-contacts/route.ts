@@ -9,18 +9,19 @@ import { connectToDB } from "@/lib/mongoose";
 export async function GET(req: Request) {
   try {
     await connectToDB();
-    const clerkUser = await currentUser(); // Get the current user from Clerk
+    const clerkUser = await currentUser();
 
     if (!clerkUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Retrieve contacts for the user
+    // Fetch and convert Mongoose documents to plain JS objects
     const contacts = await Contact.find({ clerkId: clerkUser.id });
+    const plainContacts = contacts.map(contact => contact.toObject());
 
-    return NextResponse.json({ success: true, contacts });
+    return NextResponse.json({ success: true, contacts: plainContacts });
   } catch (error) {
     console.error("Error fetching contacts:", error);
     return NextResponse.json({ success: false, message: "Failed to fetch contacts." }, { status: 500 });
   }
-} 
+}
