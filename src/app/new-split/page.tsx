@@ -28,6 +28,7 @@ interface PersonalBill {
     }[];
     subtotal: number;
     taxShare: number;
+    tipShare: number;  // Added for tips
     total: number;
 }
 
@@ -52,6 +53,7 @@ const calculatePersonalBills = (billData: any) => {
                     items: [],
                     subtotal: 0,
                     taxShare: 0,
+                    tipShare: 0,  // Initialize tip share
                     total: 0
                 });
             }
@@ -67,12 +69,13 @@ const calculatePersonalBills = (billData: any) => {
         });
     });
 
-    // Calculate tax share proportionally
+    // Calculate tax and tip share proportionally
     const totalBillAmount = billData.subtotal;
     personalBillsMap.forEach(personalBill => {
         const proportion = personalBill.subtotal / totalBillAmount;
         personalBill.taxShare = billData.totalTax * proportion;
-        personalBill.total = personalBill.subtotal + personalBill.taxShare;
+        personalBill.tipShare = (billData.tipAmount || 0) * proportion;  // Calculate tip share
+        personalBill.total = personalBill.subtotal + personalBill.taxShare + personalBill.tipShare;
     });
 
     return Array.from(personalBillsMap.values());
@@ -89,6 +92,8 @@ export default function UploadBill() {
   const [personalBills, setPersonalBills] = useState<PersonalBill[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [contactRefreshKey, setContactRefreshKey] = useState(0);
+  const [tipsInCash, setTipsInCash] = useState(false);
+  const [cashTipAmount, setCashTipAmount] = useState<number>(0);
 
   const handleImageUpload = async (res: any) => {
     if (res && res[0]) {
@@ -181,7 +186,9 @@ export default function UploadBill() {
       subtotal: parseFloat(fullResponse.subtotal?.replace('$', '') || '0'),
       totalTax: parseFloat(fullResponse.totalTax?.replace('$', '') || '0'),
       total: parseFloat(fullResponse.total?.replace('$', '') || '0'),
-      imageUrl: imageUrl || ''
+      imageUrl: imageUrl || '',
+      tipAmount: tipsInCash ? cashTipAmount : 0,
+      tipsInCash: tipsInCash,
     };
 
     try {
@@ -234,13 +241,46 @@ export default function UploadBill() {
     <>
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-2xl p-6 bg-white shadow-lg rounded-lg overflow-auto flex-grow">
-          <UploadButton
-            endpoint="billImage"
-            onClientUploadComplete={handleImageUpload}
-            onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
-            className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
-          />
-          
+          <div className="flex items-center gap-4 w-full">
+            <UploadButton
+              endpoint="billImage"
+              onClientUploadComplete={handleImageUpload}
+              onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
+              className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
+            />
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="tipsInCash"
+                checked={tipsInCash}
+                onChange={(e) => setTipsInCash(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="tipsInCash">Tips paid in cash</label>
+            </div>
+          </div>
+
+          {tipsInCash && (
+            <div className="w-full flex items-center gap-2">
+              <label htmlFor="cashTipAmount">Cash tip amount: $</label>
+              <Input
+                id="cashTipAmount"
+                type="text"
+                value={cashTipAmount === 0 ? '' : cashTipAmount.toString()}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty input or valid decimal numbers
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setCashTipAmount(value === '' ? 0 : parseFloat(value || '0'));
+                  }
+                }}
+                className="w-24 border rounded"
+                placeholder="0.00"
+                inputMode="decimal"
+              />
+            </div>
+          )}
+
           {isProcessing && (
             <div className="flex items-center gap-2 text-emerald-500">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-500"></div>
@@ -335,6 +375,29 @@ export default function UploadBill() {
                       />
                     </span>
                   </div>
+                  {tipsInCash && (
+                    <div className="flex justify-between items-center">
+                      <span className="flex-grow">
+                        <strong>Tips:</strong>
+                      </span>
+                      <span className="flex items-center">
+                        <span className="mr-2">$</span>
+                        <Input
+                          type="text"
+                          value={cashTipAmount === 0 ? '' : cashTipAmount.toString()}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setCashTipAmount(value === '' ? 0 : parseFloat(value || '0'));
+                            }
+                          }}
+                          className="w-24 border rounded mx-2"
+                          placeholder="0.00"
+                          inputMode="decimal"
+                        />
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="flex-grow">
                       <strong>Total:</strong>
@@ -343,7 +406,11 @@ export default function UploadBill() {
                       <span className="mr-2">$</span>
                       <Input
                         type="number"
-                        defaultValue={fullResponse.total ? fullResponse.total.replace('$', '') : "0"}
+                        value={
+                          (parseFloat(fullResponse.total?.replace('$', '') || "0") + 
+                          (tipsInCash ? cashTipAmount : 0)).toFixed(2)
+                        }
+                        readOnly
                         className="w-24 border rounded mx-2"
                       />
                     </span>

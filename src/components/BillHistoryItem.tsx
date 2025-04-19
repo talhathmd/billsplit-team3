@@ -123,17 +123,17 @@ export default function BillHistoryItem() {
 
         // Calculate items and subtotals for each person
         bill.items.forEach(item => {
-            const numPeopleSharing = item.assignedContacts.length;
+            const numPeopleSharing = item.assignedContacts?.length || 0;
             if (numPeopleSharing === 0) return;
 
-            const pricePerPerson = item.price / numPeopleSharing;
-            const quantityPerPerson = item.quantity / numPeopleSharing;
+            const pricePerPerson = (item.price || 0) / numPeopleSharing;
+            const quantityPerPerson = (item.quantity || 1) / numPeopleSharing;
 
             item.assignedContacts.forEach(contactId => {
                 const personalBill = personalBillsMap.get(contactId);
                 if (personalBill) {
                     personalBill.items.push({
-                        name: item.name,
+                        name: item.name || 'Unknown Item',
                         quantity: quantityPerPerson,
                         price: pricePerPerson,
                         sharedWith: numPeopleSharing
@@ -144,11 +144,11 @@ export default function BillHistoryItem() {
         });
 
         // Calculate tax share proportionally
-        const totalBillAmount = bill.subtotal;
+        const totalBillAmount = bill.subtotal || 0;
         personalBillsMap.forEach(personalBill => {
-            const proportion = personalBill.subtotal / totalBillAmount;
-            personalBill.taxShare = bill.totalTax * proportion;
-            personalBill.total = personalBill.subtotal + personalBill.taxShare;
+            const proportion = totalBillAmount > 0 ? (personalBill.subtotal || 0) / totalBillAmount : 0;
+            personalBill.taxShare = ((bill.totalTax || 0) * proportion) || 0;
+            personalBill.total = (personalBill.subtotal || 0) + (personalBill.taxShare || 0);
         });
 
         return Array.from(personalBillsMap.values()).filter(bill => bill.items.length > 0);
@@ -311,22 +311,22 @@ export default function BillHistoryItem() {
                                                 </p>
                                             )}
                                         </div>
-                                        <p>${item.price.toFixed(2)}</p>
+                                        <p>${(item.price || 0).toFixed(2)}</p>
                                     </div>
                                 ))}
                                 
                                 <div className="border-t pt-3 space-y-2">
                                     <div className="flex justify-between">
                                         <span>Subtotal</span>
-                                        <span>${personalBill.subtotal.toFixed(2)}</span>
+                                        <span>${(personalBill.subtotal || 0).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Tax Share</span>
-                                        <span>${personalBill.taxShare.toFixed(2)}</span>
+                                        <span>${(personalBill.taxShare || 0).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between font-bold">
                                         <span>Total</span>
-                                        <span>${personalBill.total.toFixed(2)}</span>
+                                        <span>${(personalBill.total || 0).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
