@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { IoPerson } from "react-icons/io5";
 import { useParams } from 'next/navigation';
+import { userInfo } from 'os';
+import { useUser } from "@clerk/nextjs";
+import Contact from "@/lib/models/contact.model";
 
 interface SharedBill {
     storeName: string;
@@ -19,15 +22,21 @@ interface SharedBill {
     taxShare: number;
     total: number;
     contactName: string;
+    contactId: string ,
+    isCurrentUser?: boolean,
+    isMyBill: boolean;
 }
 
 export default function SharedBillPage() {
+    const { user } = useUser();
     const params = useParams();
     const shareId = params?.shareId as string;
-    
+
     const [bill, setBill] = useState<SharedBill | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    
 
     useEffect(() => {
         const fetchBill = async () => {
@@ -39,6 +48,8 @@ export default function SharedBillPage() {
                     throw new Error('Failed to fetch bill');
                 }
                 const data = await response.json();
+                console.log("API response:", data); // Add this to see what's returned
+                console.log("isCurrentUser in response:", data.isCurrentUser);
                 setBill(data);
             } catch (error) {
                 setError('Failed to load bill details');
@@ -48,8 +59,11 @@ export default function SharedBillPage() {
             }
         };
 
+
+
         fetchBill();
     }, [shareId]);
+
 
     if (loading) {
         return (
@@ -76,13 +90,15 @@ export default function SharedBillPage() {
                 <Card className="bg-white p-6 shadow-lg rounded-lg">
                     <div className="flex items-center gap-2 mb-6">
                         <IoPerson className="w-6 h-6 text-emerald-500" />
-                        <h1 className="text-2xl font-bold">{bill.contactName}'s Bill</h1>
+                        <h1 className="text-2xl font-bold">
+                            {bill.contactName === "Me" ? "Your Bill" : `${bill.contactName}'s Bill`}
+                        </h1>
                     </div>
 
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold">{bill.storeName}</h2>
                         <p className="text-gray-600">{new Date(bill.date).toLocaleDateString()}</p>
-                    </div>
+                    </div> 
 
                     {bill.imageUrl && (
                         <div className="mb-6">

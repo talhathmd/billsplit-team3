@@ -5,6 +5,7 @@ import { ContactDocument } from "@/lib/models/contact.model";
 import { IoMdCopy, IoMdCheckmark } from "react-icons/io";
 import { IoPerson } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 
 interface Bill {
     _id: string;
@@ -39,6 +40,7 @@ interface PersonalBill {
 }
 
 export default function BillHistoryItem() {
+    const { user } = useUser();
     const [bills, setBills] = useState<Bill[]>([]);
     const [contacts, setContacts] = useState<ContactDocument[]>([]);
     const [modalIsOpen, setModalOpen] = useState(false);
@@ -119,7 +121,19 @@ export default function BillHistoryItem() {
                 taxShare: 0,
                 total: 0
             });
-        });
+        }); 
+
+        // add the current user as "Me" if not already in contacts
+        if (user && !personalBillsMap.has(user.id)) {
+            personalBillsMap.set(user.id, {
+                contactId: user.id,
+                contactName: "Me",
+                items: [],
+                subtotal: 0,
+                taxShare: 0,
+                total: 0
+            });
+        }
 
         // Calculate items and subtotals for each person
         bill.items.forEach(item => {
@@ -130,8 +144,9 @@ export default function BillHistoryItem() {
             const quantityPerPerson = item.quantity / numPeopleSharing;
 
             item.assignedContacts.forEach(contactId => {
-                const personalBill = personalBillsMap.get(contactId);
-                if (personalBill) {
+                // Handle the case when the contactId is the current user's id
+                if (personalBillsMap.has(contactId)) {
+                    const personalBill = personalBillsMap.get(contactId)!;
                     personalBill.items.push({
                         name: item.name,
                         quantity: quantityPerPerson,
@@ -274,7 +289,9 @@ export default function BillHistoryItem() {
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-2">
                                     <IoPerson className="w-5 h-5 text-emerald-500" />
-                                    <h3 className="text-xl font-semibold">{personalBill.contactName}'s Bill</h3>
+                                    <h3 className="text-xl font-semibold">
+                                        {personalBill.contactName === "Me" ? "Your" : `${personalBill.contactName}'s`} Bill
+                                    </h3>
                                 </div>
                                 <Button
                                     onClick={() => generateShareLink(selectedBill._id, personalBill.contactId)}
@@ -311,22 +328,22 @@ export default function BillHistoryItem() {
                                                 </p>
                                             )}
                                         </div>
-                                        <p>${item.price.toFixed(2)}</p>
+                                        <p>${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
                                     </div>
                                 ))}
                                 
                                 <div className="border-t pt-3 space-y-2">
                                     <div className="flex justify-between">
                                         <span>Subtotal</span>
-                                        <span>${personalBill.subtotal.toFixed(2)}</span>
+                                        <span>${typeof personalBill.subtotal === 'number' ? personalBill.subtotal.toFixed(2) : '0.00'}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Tax Share</span>
-                                        <span>${personalBill.taxShare.toFixed(2)}</span>
+                                        <span>${typeof personalBill.taxShare === 'number' ? personalBill.taxShare.toFixed(2) : '0.00'}</span>
                                     </div>
                                     <div className="flex justify-between font-bold">
                                         <span>Total</span>
-                                        <span>${personalBill.total.toFixed(2)}</span>
+                                        <span>${typeof personalBill.total === 'number' ? personalBill.total.toFixed(2) : '0.00'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -337,11 +354,24 @@ export default function BillHistoryItem() {
         }
 
         return (
-            <div className="space-y-4">
-                <div className="flex justify-between text-gray-600">
-                    <span>Date: {new Date(selectedBill.date).toLocaleDateString()}</span>
-                    <span>Time: {selectedBill.time}</span>
+            <div className="flex flex-col">
+                {/* Close button row */}
+                <div className="flex justify-end">
+                    <button
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                    aria-label="Close"
+                    >
+                    &times;
+                    </button>
                 </div>
+
+                {/* Date and Time row */}
+                <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-500">Date: April 15</span>
+                    <span className="text-sm text-gray-500">Time: 3:00 PM</span>
+                </div>
+               
 
                 <div className="border-t pt-4">
                     <h3 className="font-semibold mb-2">Items</h3>
@@ -369,15 +399,15 @@ export default function BillHistoryItem() {
                 <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span>${selectedBill.subtotal.toFixed(2)}</span>
+                        <span>${typeof selectedBill.subtotal === 'number' ? selectedBill.subtotal.toFixed(2) : '0.00'}</span>
                     </div>
                     <div className="flex justify-between">
                         <span>Tax</span>
-                        <span>${selectedBill.totalTax.toFixed(2)}</span>
+                        <span>${typeof selectedBill.totalTax === 'number' ? selectedBill.totalTax.toFixed(2) : '0.00'}</span>
                     </div>
                     <div className="flex justify-between font-bold">
                         <span>Total</span>
-                        <span>${selectedBill.total.toFixed(2)}</span>
+                        <span>${typeof selectedBill.total === 'number' ? selectedBill.total.toFixed(2) : '0.00'}</span>
                     </div>
                 </div>
 
@@ -406,7 +436,9 @@ export default function BillHistoryItem() {
                             <div>
                                 <h3 className="text-xl font-semibold">{bill.storeName}</h3>
                                 <p className="text-gray-600">{new Date(bill.date).toLocaleDateString()}</p>
-                                <p className="text-lg font-medium mt-2">${bill.total.toFixed(2)}</p>
+                                <p className="text-lg font-medium mt-2">
+                                    ${typeof bill.total === 'number' ? bill.total.toFixed(2) : '0.00'}
+                                </p>
                             </div>
                             <button 
                                 onClick={() => openModal(bill)}

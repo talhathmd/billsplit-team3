@@ -101,7 +101,7 @@ export default function BillSplitConfirmation({ personalBills, billId, onClose }
                                     <div className="flex items-center gap-2">
                                         <IoPerson className="w-5 h-5 text-emerald-500" />
                                         <h3 className="text-xl font-semibold">
-                                            {bill.contactName}'s Bill
+                                            {bill.contactName === "Me" ? "Your Bill" : `${bill.contactName}'s Bill`}
                                         </h3>
                                     </div>
                                     <Button
