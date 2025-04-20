@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { IoPerson } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
 import { IoMdCopy, IoMdCheckmark } from "react-icons/io";
+import SendEmailButton from './SendEmailButton';
 
 interface PersonalBill {
     contactId: string;
@@ -120,6 +121,11 @@ export default function BillSplitConfirmation({ personalBills, billId, onClose }
                                             </>
                                         )}
                                     </Button>
+                                    <SendEmailButton
+                                        billId={billId}
+                                        contactId={bill.contactId}
+                                        contactEmail={bill.contactName}
+                                    />
                                 </div>
 
                                 <div className="space-y-3">

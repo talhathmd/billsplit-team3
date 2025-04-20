@@ -39,6 +39,28 @@ interface PersonalBill {
     total: number;
 }
 
+const sendEmailLink = async (billId: string, contactId: string) => {
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billId, contactId }),
+      });
+  
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+  
+      alert('✅ Email sent successfully!');
+    } catch (error) {
+      console.error('Send Email Error:', error);
+      alert('❌ Failed to send email.');
+    }
+  };
+  
+  
+
 export default function BillHistoryItem() {
     const { user } = useUser();
     const [bills, setBills] = useState<Bill[]>([]);
@@ -293,28 +315,38 @@ export default function BillHistoryItem() {
                                         {personalBill.contactName === "Me" ? "Your" : `${personalBill.contactName}'s`} Bill
                                     </h3>
                                 </div>
-                                <Button
-                                    onClick={() => generateShareLink(selectedBill._id, personalBill.contactId)}
-                                    className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-2"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={() => generateShareLink(selectedBill._id, personalBill.contactId)}
+                                        className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-2"
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                             <span>Copying...</span>
                                         </>
-                                    ) : copiedLinks[personalBill.contactId] ? (
+                                        ) : copiedLinks[personalBill.contactId] ? (
                                         <>
                                             <IoMdCheckmark className="w-4 h-4" />
                                             <span>Copied!</span>
                                         </>
-                                    ) : (
+                                        ) : (
                                         <>
                                             <IoMdCopy className="w-4 h-4" />
-                                            <span>Copy Share Link</span>
+                                            <span>Copy Link</span>
                                         </>
-                                    )}
-                                </Button>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => sendEmailLink(selectedBill._id, personalBill.contactId)}
+                                        className="bg-emerald-500 hover:bg-emerald-600 text-white ml-2"
+                                        >
+                                        Email Link
+                                    </Button>
+                                    </div>
+
                             </div>
                             
                             <div className="space-y-3">

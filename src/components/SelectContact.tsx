@@ -81,7 +81,6 @@ export default function SelectContact({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">— None —</SelectItem>
         {contacts.map((contact) => (
           <SelectItem key={contact._id} value={contact._id}>
             {contact.name} ({contact.email})
