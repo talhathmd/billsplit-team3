@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import ViewContacts from "@/components/ViewContacts";
+import BackButton from '@/components/BackButton';
 
 export default function ViewContactPage() {
   const [name, setName] = useState("");
@@ -36,6 +37,7 @@ export default function ViewContactPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100 p-6">
+      <BackButton />
       <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-md p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-2xl font-bold">Add Contact</h2>
         <form onSubmit={handleSubmit} className="w-full">
