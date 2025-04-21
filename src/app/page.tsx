@@ -52,7 +52,10 @@ export default function Home() {
                 </SignedOut>
                 <SignedIn>
                   <Link href="/onboarding">
-                    <Button className="py-2.5 px-6 bg-emerald-600 text-white rounded-md font-medium hover:bg-teal-600 transition-colors duration-200">
+                    <Button 
+                      data-tutorial="dashboard-button"
+                      className="py-2.5 px-6 bg-emerald-600 text-white rounded-md font-medium hover:bg-teal-600 transition-colors duration-200"
+                    >
                       Dashboard
                     </Button>
                   </Link>
