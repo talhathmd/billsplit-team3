@@ -124,7 +124,17 @@ export default function BillHistoryItem() {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             const data = await response.json();
-            setBills(data);
+
+            // sort bills by date in descending order (newest first)
+            const sortedBills = [...data].sort((a, b) => {
+                // First try to sort by createdAt timestamp
+                if (a.createdAt && b.createdAt) {
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                }
+                // Fall back to sorting by date field
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+            setBills(sortedBills);
         } catch (error) {
             console.error('Error fetching bills:', error);
         }
