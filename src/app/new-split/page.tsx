@@ -9,6 +9,7 @@ import Contact, { ContactDocument } from "@/lib/models/contact.model";
 import { BillItem } from "@/lib/models/bills.model";
 import BillSplitConfirmation from "@/components/BillSplitConfirmation";
 import { useUser } from "@clerk/nextjs";
+import Link from 'next/link';
 
 // Add this interface to track item assignments
 interface ItemAssignment {
@@ -260,18 +261,46 @@ export default function UploadBill() {
     }
   };
 
+  // handle contact removal 
+  const handleRemoveContact = (itemIndex: number, contactId: string) => {
+    setItemAssignments(prev => {
+      const newAssignments = [...prev];
+      const assignmentIndex = newAssignments.findIndex(a => a.itemIndex === itemIndex);
+      
+      if (assignmentIndex >= 0) {
+        newAssignments[assignmentIndex].contacts = newAssignments[assignmentIndex].contacts.filter(
+          contact => contact._id !== contactId
+        );
+        
+        // If no contacts left, remove the entire assignment
+        if (newAssignments[assignmentIndex].contacts.length === 0) {
+          newAssignments.splice(assignmentIndex, 1);
+        }
+      }
+      
+      return newAssignments;
+    });
+  };
+
   return (
     <>
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-2xl p-6 bg-white shadow-lg rounded-lg overflow-auto flex-grow">
-          <div className="flex items-center gap-4 w-full">
             <UploadButton
               endpoint="billImage"
               onClientUploadComplete={handleImageUpload}
               onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
               className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
             />
-            <div className="flex items-center gap-2">
+
+            {/* Add Contacts button */}
+            <Link href="/view-contact" className="block">
+              <div className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer">
+                Add Contacts
+              </div>
+            </Link>
+
+            <div className="w-full flex items-center justify-center gap-2">
               <input
                 type="checkbox"
                 id="tipsInCash"
@@ -281,10 +310,11 @@ export default function UploadBill() {
               />
               <label htmlFor="tipsInCash">Tips paid in cash</label>
             </div>
-          </div>
 
-          {tipsInCash && (
-            <div className="w-full flex items-center gap-2">
+            
+
+            {tipsInCash && (
+            <div className="w-full flex items-center justify-center gap-2">
               <label htmlFor="cashTipAmount">Cash tip amount: $</label>
               <Input
                 id="cashTipAmount"
@@ -303,6 +333,9 @@ export default function UploadBill() {
               />
             </div>
           )}
+
+          
+          
 
           {isProcessing && (
             <div className="flex items-center gap-2 text-emerald-500">
@@ -354,15 +387,29 @@ export default function UploadBill() {
                           includeSelf={true}
                         />
                       </div>
-                      {/* Display assigned contacts */}
-                      <div className="mt-2">
+                      {/* Display assigned contacts + remove */}
+                      <div className="mt-2 flex flex-wrap">
                         {itemAssignments.find(a => a.itemIndex === index)?.contacts.map(contact => (
-                          <span key={contact._id} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded mr-2 mb-2">
+                          <span key={contact._id} className="inline-flex items-center bg-emerald-100 text-emerald-800 px-2 py-1 rounded mr-2 mb-2">
                             {contact.name}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault(); // Prevent any parent form submission
+                                handleRemoveContact(index, contact._id);
+                              }}
+                              className="ml-1 text-emerald-700 hover:text-emerald-900"
+                              aria-label="Remove contact"
+                            >
+                              {/* the close button! */}
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
                           </span>
                         ))}
+                        </div>
                       </div>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
