@@ -10,6 +10,7 @@ import { BillItem } from "@/lib/models/bills.model";
 import BillSplitConfirmation from "@/components/BillSplitConfirmation";
 import { useUser } from "@clerk/nextjs";
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 
 // Add this interface to track item assignments
 interface ItemAssignment {
@@ -103,51 +104,57 @@ export default function UploadBill() {
   const [contactRefreshKey, setContactRefreshKey] = useState(0);
   const [tipsInCash, setTipsInCash] = useState(false);
   const [cashTipAmount, setCashTipAmount] = useState<number>(0);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const handleImageUpload = async (res: any) => {
     if (res && res[0]) {
-      setIsProcessing(true);
-      const uploadedImageUrl = res[0].url;
-      setImageUrl(uploadedImageUrl);
+      const imageUrl = res[0].url;
+      setUploadedImageUrl(imageUrl);
+      setImageUrl(imageUrl);
+    }
+  };
 
-      try {
-        // Send image URL to the API for Google Vision processing
-        const response = await fetch("/api/extract-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl: uploadedImageUrl }),
-        });
+  const handleStartScan = async () => {
+    if (!uploadedImageUrl) return;
+    
+    setIsProcessing(true);
+    try {
+      // Send image URL to the API for Google Vision processing
+      const response = await fetch("/api/extract-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: uploadedImageUrl }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to process image");
-        }
-
-        const { text } = await response.json();
-        setExtractedText(text);
-
-        // Send extracted text to Cloudflare
-        const cloudflareResponse = await fetch("/api/cloudflare", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ extractedText: text }),
-        });
-
-        if (!cloudflareResponse.ok) {
-          throw new Error("Failed to retrieve data from Cloudflare");
-        }
-
-        const data = await cloudflareResponse.json();
-        console.log("Cloudflare API Response:", data);
-
-        if (data.result && data.result.response) {
-          setFullResponse(data.result.response);
-        }
-      } catch (error) {
-        console.error("Error processing image:", error);
-        alert("Failed to process image. Please try again.");
-      } finally {
-        setIsProcessing(false);
+      if (!response.ok) {
+        throw new Error("Failed to process image");
       }
+
+      const { text } = await response.json();
+      setExtractedText(text);
+
+      // Send extracted text to Cloudflare
+      const cloudflareResponse = await fetch("/api/cloudflare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extractedText: text }),
+      });
+
+      if (!cloudflareResponse.ok) {
+        throw new Error("Failed to retrieve data from Cloudflare");
+      }
+
+      const data = await cloudflareResponse.json();
+      console.log("Cloudflare API Response:", data);
+
+      if (data.result && data.result.response) {
+        setFullResponse(data.result.response);
+      }
+    } catch (error) {
+      console.error("Error processing image:", error);
+      alert("Failed to process image. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -284,14 +291,35 @@ export default function UploadBill() {
 
   return (
     <>
+      <BackButton />
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div className="flex flex-col items-center space-y-4 mt-8 w-full max-w-2xl p-6 bg-white shadow-lg rounded-lg overflow-auto flex-grow">
-            <UploadButton
-              endpoint="billImage"
-              onClientUploadComplete={handleImageUpload}
-              onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
-            />
+            <h1 className="text-3xl font-bold mb-6 text-emerald-600">Upload your Bill</h1>
+            
+            <div className="flex flex-col items-center gap-4 w-full">
+              <UploadButton
+                endpoint="billImage"
+                onClientUploadComplete={handleImageUpload}
+                onUploadError={(err: Error) => alert(`Upload failed: ${err.message}`)}
+                className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer"
+              />
+
+              {uploadedImageUrl && !isProcessing && !fullResponse && (
+                <Button
+                  onClick={handleStartScan}
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200"
+                >
+                  Start Scan
+                </Button>
+              )}
+
+              {isProcessing && (
+                <div className="flex items-center gap-2 text-emerald-500">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-500"></div>
+                  <span>Processing receipt...</span>
+                </div>
+              )}
+            </div>
 
             {/* Add Contacts button */}
             <Link href="/view-contact" className="block">
@@ -337,13 +365,6 @@ export default function UploadBill() {
           
           
 
-          {isProcessing && (
-            <div className="flex items-center gap-2 text-emerald-500">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-500"></div>
-              <span>Processing receipt...</span>
-            </div>
-          )}
-          
           {imageUrl && (
             <Button
               onClick={() => window.open(imageUrl, "_blank")}
