@@ -20,6 +20,7 @@ export interface BillDocument extends Document {
   totalTax: number;
   total: number;
   imageUrl: string;
+  tipAmount: number;  // Added tipAmount field
 }
 
 const billSchema = new mongoose.Schema({
@@ -41,7 +42,8 @@ const billSchema = new mongoose.Schema({
   subtotal: Number,
   totalTax: Number,
   total: Number,
-  imageUrl: String
+  imageUrl: String,
+  tipAmount: { type: Number, default: 0 }  // Added tipAmount field with default 0
 }, { timestamps: true });
 
 const Bill = mongoose.models.Bill || mongoose.model<BillDocument>('Bill', billSchema);

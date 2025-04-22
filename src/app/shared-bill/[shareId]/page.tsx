@@ -22,6 +22,7 @@ interface SharedBill {
     }[];
     subtotal: number;
     taxShare: number;
+    tipShare: number;  // Added tipShare
     total: number;
     contactName: string;
     contactId: string ,
@@ -164,6 +165,12 @@ export default function SharedBillPage() {
                                 <span>Tax Share</span>
                                 <span>${bill.taxShare.toFixed(2)}</span>
                             </div>
+                            {bill.tipShare > 0 && (
+                                <div className="flex justify-between">
+                                    <span>Tip Share</span>
+                                    <span>${bill.tipShare.toFixed(2)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-lg font-bold">
                                 <span>Total</span>
                                 <span>${bill.total.toFixed(2)}</span>
@@ -194,4 +201,4 @@ export default function SharedBillPage() {
             </div>
         </div>
     );
-} 
+}

@@ -20,10 +20,21 @@ export default function DashboardTutorial() {
     const updatePosition = () => {
       if (popupRef.current) {
         const popupRect = popupRef.current.getBoundingClientRect();
-        setPopupPosition({
-          top: (window.innerHeight - popupRect.height) / 2,
-          left: (window.innerWidth - popupRect.width) / 2
-        });
+        const windowWidth = window.innerWidth;
+        
+        // For mobile screens (less than 640px)
+        if (windowWidth < 640) {
+          setPopupPosition({
+            top: 20, // 20px from top
+            left: Math.max(10, (windowWidth - popupRect.width) / 2)
+          });
+        } else {
+          // Desktop centered positioning
+          setPopupPosition({
+            top: (window.innerHeight - popupRect.height) / 2,
+            left: (window.innerWidth - popupRect.width) / 2
+          });
+        }
       }
     };
 
@@ -60,9 +71,9 @@ export default function DashboardTutorial() {
           left: `${popupPosition.left}px`,
           zIndex: 50,
         }}
-        className="shadow-2xl animate-fade-in"
+        className="shadow-2xl animate-fade-in mx-4"
       >
-        <Card className="bg-white p-6 rounded-lg w-96">
+        <Card className="bg-white p-6 rounded-lg max-w-[90vw] w-96">
           <h3 className="text-xl font-bold mb-4 text-emerald-600">Welcome to Your Dashboard!</h3>
           <div className="space-y-4 text-gray-600">
             <p className="font-semibold text-emerald-600">Important Note:</p>

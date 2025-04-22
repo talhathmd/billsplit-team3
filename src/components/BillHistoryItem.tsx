@@ -23,6 +23,7 @@ interface Bill {
     total: number;
     imageUrl: string;
     createdAt: string;
+    tipAmount: number;
 }
 
 interface PersonalBill {
@@ -36,6 +37,7 @@ interface PersonalBill {
     }[];
     subtotal: number;
     taxShare: number;
+    tipShare: number;
     total: number;
     paymentStatus?: string;
 }
@@ -152,6 +154,7 @@ export default function BillHistoryItem() {
                 items: [],
                 subtotal: 0,
                 taxShare: 0,
+                tipShare: 0,
                 total: 0,
                 paymentStatus: 'pending'
             });
@@ -165,6 +168,7 @@ export default function BillHistoryItem() {
                 items: [],
                 subtotal: 0,
                 taxShare: 0,
+                tipShare: 0,
                 total: 0,
                 paymentStatus: 'pending'
             });
@@ -484,6 +488,12 @@ export default function BillHistoryItem() {
                         <span>Tax</span>
                         <span>${typeof selectedBill.totalTax === 'number' ? selectedBill.totalTax.toFixed(2) : '0.00'}</span>
                     </div>
+                    {selectedBill.tipAmount > 0 && (
+                        <div className="flex justify-between">
+                            <span>Tips (Cash)</span>
+                            <span>${selectedBill.tipAmount.toFixed(2)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between font-bold">
                         <span>Total</span>
                         <span>${typeof selectedBill.total === 'number' ? selectedBill.total.toFixed(2) : '0.00'}</span>

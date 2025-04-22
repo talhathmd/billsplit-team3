@@ -16,83 +16,72 @@ export async function GET(
     request: Request,
     { params }: { params: { shareId: string } }
 ) {
-    const { userId } = await auth();
+    try {
+        await connectToDB();
 
-    await connectToDB();
-    
-    const shareLink = await ShareLink.findOne({ shareId: params.shareId });
-    if (!shareLink) {
-        return NextResponse.json({ error: "Share link not found" }, { status: 404 });
+        const { userId } = auth();
+        const shareLink = await ShareLink.findById(params.shareId);
+        if (!shareLink) {
+            return NextResponse.json({ error: "Share link not found" }, { status: 404 });
+        }
+
+        const bill = await Bill.findById(shareLink.billId);
+        if (!bill) {
+            return NextResponse.json({ error: "Bill not found" }, { status: 404 });
+        }
+
+        const contact = await Contact.findById(shareLink.contactId);
+
+        // Calculate personal bill for this contact
+        const personalBill = {
+            storeName: bill.storeName,
+            date: bill.date,
+            imageUrl: bill.imageUrl,
+            items: bill.items
+                .filter((item: BillItem) => item.assignedContacts.includes(shareLink.contactId))
+                .map((item: BillItem) => {
+                    const numPeopleSharing = item.assignedContacts.length;
+                    return {
+                        name: item.name,
+                        quantity: item.quantity / numPeopleSharing,
+                        price: item.price / numPeopleSharing,
+                        sharedWith: numPeopleSharing
+                    };
+                }),
+        };
+
+        const subtotal = personalBill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+        const proportion = subtotal / bill.subtotal;
+        const taxShare = bill.totalTax * proportion;
+        const tipShare = (bill.tipAmount || 0) * proportion;  // Calculate tip share
+
+        const isCurrentUser = 
+            (shareLink.contactId.startsWith("user_") && shareLink.contactId === userId) || 
+            (contact.clerkId && contact.clerkId === userId) || 
+            contact.name === "Me";
+
+        const isMyBill = (
+            userId && (
+              (shareLink.contactId === userId) ||
+              (contact.clerkId && contact.clerkId === userId)
+            )
+        );
+
+        return NextResponse.json({
+            ...personalBill,
+            subtotal,
+            taxShare,
+            tipShare,  // Include tip share in response
+            total: subtotal + taxShare + tipShare,  // Add tip to total
+            contactName: contact ? contact.name : "Unknown",
+            contactId: shareLink.contactId,
+            isCurrentUser,
+            isMyBill,
+            paymentStatus: shareLink.paymentStatus || 'pending'
+        });
+
+    } catch (error) {
+        console.error('Error getting shared bill:', error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    const bill = await Bill.findById(shareLink.billId);
-    if (!bill) {
-        return NextResponse.json({ error: "Bill not found" }, { status: 404 });
-    }
-
-    const contact = await Contact.findById(shareLink.contactId);
-    if (!contact) {
-        return NextResponse.json({ error: "Contact not found" }, { status: 404 });
-    }
-
-    const personalBill = {
-        storeName: bill.storeName,
-        date: bill.date,
-        imageUrl: bill.imageUrl,
-        items: bill.items
-            .filter((item: BillItem) => item.assignedContacts.includes(shareLink.contactId))
-            .map((item: BillItem) => {
-                const numPeopleSharing = item.assignedContacts.length;
-                return {
-                    name: item.name,
-                    quantity: item.quantity / numPeopleSharing,
-                    price: item.price / numPeopleSharing,
-                    sharedWith: numPeopleSharing
-                };
-            }),
-    };
-
-    const subtotal = personalBill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
-    const proportion = subtotal / bill.subtotal;
-    const taxShare = bill.totalTax * proportion;
-
-    const isCurrentUser = 
-    (shareLink.contactId.startsWith("user_") && shareLink.contactId === userId) || 
-    (contact.clerkId && contact.clerkId === userId) || 
-    contact.name === "Me";
-
-    const isMyBill = (
-        userId && (
-          (shareLink.contactId === userId) ||
-          (contact.clerkId === userId) ||
-          (contact.name === "Me")
-        )
-      ) ? true : false;
-
-    console.log("Contact clerkId:", contact.clerkId);
-    console.log("Current userId:", userId);
-    console.log("Are they equal?", contact.clerkId === userId);
-    console.log("isCurrentUser flag:", isCurrentUser);
-
-    console.log("Final response:", {
-  ...personalBill,
-  subtotal,
-  taxShare,
-  total: subtotal + taxShare,
-  contactName: contact.name,
-  contactId: contact._id.toString(),
-  isCurrentUser: isCurrentUser
-});
-
-    return NextResponse.json({
-        ...personalBill,
-        subtotal,
-        taxShare,
-        total: subtotal + taxShare,
-        contactName: contact.name,
-        contactId: contact._id.toString(),
-        isCurrentUser: isCurrentUser,
-        isMyBill: isMyBill,
-        paymentStatus: shareLink.paymentStatus
-    });
-} 
+}
