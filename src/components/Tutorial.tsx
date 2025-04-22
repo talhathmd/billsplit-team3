@@ -46,12 +46,21 @@ export default function Tutorial() {
 
     const elementRect = element.getBoundingClientRect();
     const popupRect = popupRef.current.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
 
-    // Position to the right of the element with some offset
-    const top = elementRect.top + (elementRect.height - popupRect.height) / 2;
-    const left = elementRect.right + 20; // 20px gap
-
-    setPopupPosition({ top, left });
+    // For mobile screens (less than 640px - Tailwind's sm breakpoint)
+    if (windowWidth < 640) {
+      // Position below the element on mobile
+      const top = elementRect.bottom + 20; // 20px gap
+      const left = Math.max(10, Math.min(windowWidth - popupRect.width - 10,
+        elementRect.left + (elementRect.width - popupRect.width) / 2));
+      setPopupPosition({ top, left });
+    } else {
+      // Desktop positioning (to the right)
+      const top = elementRect.top + (elementRect.height - popupRect.height) / 2;
+      const left = elementRect.right + 20; // 20px gap
+      setPopupPosition({ top, left });
+    }
   };
 
   // Handle component mount
