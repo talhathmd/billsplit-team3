@@ -16,30 +16,25 @@ export async function GET(
     request: Request,
     { params }: { params: { shareId: string } }
 ) {
-    const { userId } = auth(); // get the current user's ID from Clerk
+    const { userId } = await auth();
 
     await connectToDB();
     
-    // Access params.shareId directly in the query
     const shareLink = await ShareLink.findOne({ shareId: params.shareId });
     if (!shareLink) {
         return NextResponse.json({ error: "Share link not found" }, { status: 404 });
     }
 
-    // Find the bill
     const bill = await Bill.findById(shareLink.billId);
     if (!bill) {
         return NextResponse.json({ error: "Bill not found" }, { status: 404 });
     }
 
-    // Find the contact to get their name *!*!*!**!*!*!**!!**!*!*!*!**!*!*!*!*!*
     const contact = await Contact.findById(shareLink.contactId);
     if (!contact) {
         return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
 
-
-    // Find the items assigned to this contact
     const personalBill = {
         storeName: bill.storeName,
         date: bill.date,
@@ -57,7 +52,6 @@ export async function GET(
             }),
     };
 
-    // Calculate totals
     const subtotal = personalBill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
     const proportion = subtotal / bill.subtotal;
     const taxShare = bill.totalTax * proportion;
@@ -97,6 +91,8 @@ export async function GET(
         total: subtotal + taxShare,
         contactName: contact.name,
         contactId: contact._id.toString(),
-        isCurrentUser: isCurrentUser
+        isCurrentUser: isCurrentUser,
+        isMyBill: isMyBill,
+        paymentStatus: shareLink.paymentStatus
     });
 } 

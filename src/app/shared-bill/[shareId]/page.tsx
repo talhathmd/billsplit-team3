@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import { userInfo } from 'os';
 import { useUser } from "@clerk/nextjs";
 import Contact from "@/lib/models/contact.model";
+import { Button } from "@/components/ui/button";
+import { IoMdCheckmark } from "react-icons/io";
 
 interface SharedBill {
     storeName: string;
@@ -25,6 +27,7 @@ interface SharedBill {
     contactId: string ,
     isCurrentUser?: boolean,
     isMyBill: boolean;
+    paymentStatus: string;
 }
 
 export default function SharedBillPage() {
@@ -35,8 +38,7 @@ export default function SharedBillPage() {
     const [bill, setBill] = useState<SharedBill | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    
+    const [paymentStatus, setPaymentStatus] = useState<string>('pending');
 
     useEffect(() => {
         const fetchBill = async () => {
@@ -51,6 +53,7 @@ export default function SharedBillPage() {
                 console.log("API response:", data); // Add this to see what's returned
                 console.log("isCurrentUser in response:", data.isCurrentUser);
                 setBill(data);
+                setPaymentStatus(data.paymentStatus || 'pending');
             } catch (error) {
                 setError('Failed to load bill details');
                 console.error(error);
@@ -59,11 +62,32 @@ export default function SharedBillPage() {
             }
         };
 
-
-
         fetchBill();
     }, [shareId]);
 
+    const handlePaymentStatus = async () => {
+        try {
+            const response = await fetch('/api/update-payment-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    shareId,
+                    status: paymentStatus === 'pending' ? 'paid' : 'pending'
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update payment status');
+            }
+
+            const data = await response.json();
+            setPaymentStatus(data.paymentStatus);
+        } catch (error) {
+            console.error('Error updating payment status:', error);
+        }
+    };
 
     if (loading) {
         return (
@@ -144,6 +168,26 @@ export default function SharedBillPage() {
                                 <span>Total</span>
                                 <span>${bill.total.toFixed(2)}</span>
                             </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <Button
+                                onClick={handlePaymentStatus}
+                                className={`w-full ${
+                                    paymentStatus === 'paid' 
+                                        ? 'bg-green-500 hover:bg-green-600' 
+                                        : 'bg-emerald-500 hover:bg-emerald-600'
+                                }`}
+                            >
+                                {paymentStatus === 'paid' ? (
+                                    <>
+                                        <IoMdCheckmark className="w-5 h-5 mr-2" />
+                                        Paid
+                                    </>
+                                ) : (
+                                    'Mark as Paid'
+                                )}
+                            </Button>
                         </div>
                     </div>
                 </Card>

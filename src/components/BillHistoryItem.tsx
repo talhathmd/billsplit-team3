@@ -32,11 +32,12 @@ interface PersonalBill {
         name: string;
         quantity: number;
         price: number;
-        sharedWith: number; // number of people sharing this item
+        sharedWith: number;
     }[];
     subtotal: number;
     taxShare: number;
     total: number;
+    paymentStatus?: string;
 }
 
 const sendEmailLink = async (billId: string, contactId: string) => {
@@ -140,7 +141,7 @@ export default function BillHistoryItem() {
         }
     };
 
-    const calculatePersonalBills = (bill: Bill) => {
+    const calculatePersonalBills = async (bill: Bill) => {
         const personalBillsMap = new Map<string, PersonalBill>();
 
         // Initialize personal bills for each contact
@@ -151,7 +152,8 @@ export default function BillHistoryItem() {
                 items: [],
                 subtotal: 0,
                 taxShare: 0,
-                total: 0
+                total: 0,
+                paymentStatus: 'pending'
             });
         }); 
 
@@ -163,7 +165,8 @@ export default function BillHistoryItem() {
                 items: [],
                 subtotal: 0,
                 taxShare: 0,
-                total: 0
+                total: 0,
+                paymentStatus: 'pending'
             });
         }
 
@@ -176,7 +179,6 @@ export default function BillHistoryItem() {
             const quantityPerPerson = (item.quantity || 1) / numPeopleSharing;
 
             item.assignedContacts.forEach(contactId => {
-                // Handle the case when the contactId is the current user's id
                 if (personalBillsMap.has(contactId)) {
                     const personalBill = personalBillsMap.get(contactId)!;
                     personalBill.items.push({
@@ -198,12 +200,37 @@ export default function BillHistoryItem() {
             personalBill.total = (personalBill.subtotal || 0) + (personalBill.taxShare || 0);
         });
 
+        // Fetch payment statuses from the API
+        try {
+            const response = await fetch('/api/get-payment-statuses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ billId: bill._id }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Update payment statuses for each personal bill
+                    personalBillsMap.forEach((personalBill) => {
+                        if (data.paymentStatuses[personalBill.contactId]) {
+                            personalBill.paymentStatus = data.paymentStatuses[personalBill.contactId];
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching payment statuses:', error);
+        }
+
         return Array.from(personalBillsMap.values()).filter(bill => bill.items.length > 0);
     };
 
-    const handleViewPersonalBills = () => {
+    const handleViewPersonalBills = async () => {
         if (selectedBill) {
-            const bills = calculatePersonalBills(selectedBill);
+            const bills = await calculatePersonalBills(selectedBill);
             setPersonalBills(bills);
             setShowPersonalBills(true);
         }
@@ -324,6 +351,11 @@ export default function BillHistoryItem() {
                                     <h3 className="text-xl font-semibold">
                                         {personalBill.contactName === "Me" ? "Your" : `${personalBill.contactName}'s`} Bill
                                     </h3>
+                                    {personalBill.paymentStatus === 'paid' && (
+                                        <span className="ml-2 px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                                            Paid
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex gap-2">
                                     <Button
@@ -332,31 +364,30 @@ export default function BillHistoryItem() {
                                         disabled={loading}
                                     >
                                         {loading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            <span>Copying...</span>
-                                        </>
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                <span>Copying...</span>
+                                            </>
                                         ) : copiedLinks[personalBill.contactId] ? (
-                                        <>
-                                            <IoMdCheckmark className="w-4 h-4" />
-                                            <span>Copied!</span>
-                                        </>
+                                            <>
+                                                <IoMdCheckmark className="w-4 h-4" />
+                                                <span>Copied!</span>
+                                            </>
                                         ) : (
-                                        <>
-                                            <IoMdCopy className="w-4 h-4" />
-                                            <span>Copy Link</span>
-                                        </>
+                                            <>
+                                                <IoMdCopy className="w-4 h-4" />
+                                                <span>Copy Link</span>
+                                            </>
                                         )}
                                     </Button>
 
                                     <Button
                                         onClick={() => sendEmailLink(selectedBill._id, personalBill.contactId)}
                                         className="bg-emerald-500 hover:bg-emerald-600 text-white ml-2"
-                                        >
+                                    >
                                         Email Link
                                     </Button>
-                                    </div>
-
+                                </div>
                             </div>
                             
                             <div className="space-y-3">

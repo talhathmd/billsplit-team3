@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Contact } from "@/lib/types/contact";
+import { IoPerson } from "react-icons/io5";
 
 export default function ViewContacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -21,22 +22,33 @@ export default function ViewContacts() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-6 mt-5">
-      <h2 className="text-2xl font-bold mb-4">Your Contacts</h2>
-      {message && <p className="text-red-500">{message}</p>}
-      <div className="w-full max-w-md">
-        {contacts.length > 0 ? (
-          contacts.map((contact) => (
-            <div key={contact._id} className="p-4 bg-white shadow-md rounded mb-2">
-              <h3 className="font-bold">{contact.name}</h3>
-              <p>Email: {contact.email}</p>
-              <p>Phone: {contact.phone}</p>
+    <div className="w-full max-w-2xl mt-10 mx-auto px-4">
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Your Contacts</h2>
+      {message && <p className="text-red-500 text-center">{message}</p>}
+
+      {contacts.length > 0 ? (
+        <div className="grid gap-4">
+          {contacts.map((contact) => (
+            <div
+              key={contact._id}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 transition-all hover:shadow-md"
+            >
+              <div className="flex">
+              <IoPerson className="w-5 h-5 text-emerald-500 mr-2" />
+              <h3 className="text-lg font-semibold text-emerald-600">{contact.name}</h3>
+              </div>
+              <p className="text-gray-600 mt-1">
+                <span className="font-medium">Email:</span> {contact.email}
+              </p>
+              <p className="text-gray-600">
+                <span className="font-medium">Phone:</span> {contact.phone}
+              </p>
             </div>
-          ))
-        ) : (
-          <p>No contacts found.</p>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-500">No contacts found.</p>
+      )}
     </div>
   );
 }
