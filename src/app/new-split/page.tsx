@@ -454,7 +454,7 @@ export default function UploadBill() {
             </div>
 
             {/* Add Contacts button */}
-            {isProcessing && !fullResponse && (            
+            {!isProcessing && !fullResponse && (            
               <div className="text-center">
                 <p>Add your contacts before scanning!</p>
                 <Link href="/view-contact" className="block">
