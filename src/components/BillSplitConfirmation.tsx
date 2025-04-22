@@ -17,6 +17,7 @@ interface PersonalBill {
     }[];
     subtotal: number;
     taxShare: number;
+    tipShare: number;  // Added tipShare
     total: number;
 }
 
@@ -33,52 +34,28 @@ export default function BillSplitConfirmation({ personalBills, billId, onClose }
         try {
             const response = await fetch('/api/create-share-link', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    billId,
-                    contactId,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billId, contactId }),
             });
+            
+            if (!response.ok) {
+                throw new Error('Failed to generate share link');
+            }
             
             const data = await response.json();
             if (data.success) {
                 const shareLink = `${window.location.origin}/shared-bill/${data.shareId}`;
                 await navigator.clipboard.writeText(shareLink);
+                setCopiedLinks(prev => ({ ...prev, [contactId]: true }));
                 
-                // Show copied status
-                setCopiedLinks(prev => ({
-                    ...prev,
-                    [contactId]: true
-                }));
-                
-                // Reset copied status after 3 seconds
                 setTimeout(() => {
-                    setCopiedLinks(prev => ({
-                        ...prev,
-                        [contactId]: false
-                    }));
+                    setCopiedLinks(prev => ({ ...prev, [contactId]: false }));
                 }, 3000);
-                
-                return shareLink;
             }
         } catch (error) {
             console.error('Error generating share link:', error);
-            alert('Failed to generate share link');
         }
     };
-
-    if (!personalBills || personalBills.length === 0) {
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                <div className="bg-white rounded-lg p-6">
-                    <h2 className="text-xl font-bold mb-4">No bills to display</h2>
-                    <Button onClick={onClose}>Close</Button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
@@ -152,6 +129,12 @@ export default function BillSplitConfirmation({ personalBills, billId, onClose }
                                             <span>Tax Share</span>
                                             <span>${bill.taxShare.toFixed(2)}</span>
                                         </div>
+                                        {bill.tipShare > 0 && (
+                                            <div className="flex justify-between">
+                                                <span>Tip Share</span>
+                                                <span>${bill.tipShare.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between font-bold">
                                             <span>Total</span>
                                             <span>${bill.total.toFixed(2)}</span>
@@ -165,4 +148,4 @@ export default function BillSplitConfirmation({ personalBills, billId, onClose }
             </div>
         </div>
     );
-} 
+}

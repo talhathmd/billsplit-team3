@@ -289,6 +289,67 @@ export default function UploadBill() {
     });
   };
 
+  const handleSubmit = async () => {
+    if (!user) return;
+    
+    try {
+      // Prepare bill data with tip amount
+      const billData = {
+        clerkId: user.id,
+        storeName: fullResponse.storeName || "Unknown Store",
+        address: fullResponse.address || "",
+        phoneNumber: fullResponse.phoneNumber || "",
+        date: fullResponse.date || new Date().toLocaleDateString(),
+        time: fullResponse.time || new Date().toLocaleTimeString(),
+        items: itemAssignments.map((assignment) => ({
+          name: fullResponse.items[assignment.itemIndex].name,
+          quantity: parseFloat(fullResponse.items[assignment.itemIndex].quantity) || 1,
+          price: parseFloat(fullResponse.items[assignment.itemIndex].price.replace("$", "")) || 0,
+          assignedContacts: assignment.contacts.map((contact) => 
+            contact._id === "me" ? user.id : contact._id
+          ),
+        })),
+        subtotal: parseFloat(fullResponse.subtotal?.replace("$", "") || "0"),
+        totalTax: parseFloat(fullResponse.totalTax?.replace("$", "") || "0"),
+        tipAmount: tipsInCash ? cashTipAmount : 0,  // Include cash tip amount if tips paid in cash
+        total: parseFloat(fullResponse.subtotal?.replace("$", "") || "0") + 
+               parseFloat(fullResponse.totalTax?.replace("$", "") || "0") +
+               (tipsInCash ? cashTipAmount : 0),  // Add tip to total
+        imageUrl: uploadedImageUrl,
+      };
+
+      console.log("Sending bill data:", billData); // Debug log
+
+      const response = await fetch("/api/save-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(billData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        if (response.status === 409) {
+          // Handle duplicate bill error
+          alert(data.error || "This bill appears to be a duplicate.");
+          return;
+        }
+        throw new Error(data.error || "Failed to save bill");
+      }
+
+      if (data.success) {
+        // Calculate personal bills with tips
+        const personalBills = calculatePersonalBills(billData, user.id);
+        setPersonalBills(personalBills);
+        setSavedBillId(data._id);
+        setShowConfirmation(true);
+      }
+    } catch (error) {
+      console.error("Error saving bill:", error);
+      alert("Failed to save bill");
+    }
+  };
+
   return (
     <>
       <BackButton />
