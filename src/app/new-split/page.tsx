@@ -11,6 +11,7 @@ import BillSplitConfirmation from "@/components/BillSplitConfirmation";
 import { useUser } from "@clerk/nextjs";
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
+import { X } from "lucide-react";
 
 // Add this interface to track item assignments
 interface ItemAssignment {
@@ -32,6 +33,12 @@ interface PersonalBill {
     taxShare: number;
     tipShare: number;  // Added for tips
     total: number;
+}
+
+interface SplitBillItem {
+  name: string;
+  quantity: number;
+  price: string;
 }
 
 // Also add the calculatePersonalBills function before your component
@@ -190,8 +197,72 @@ export default function UploadBill() {
     setContactRefreshKey(prev => prev + 1);
   };
 
+  const handleAddItem = () => {
+    if (!fullResponse) return;
+    
+    const newItem = {
+      name: "",
+      quantity: 1,
+      price: "0",
+    };
+
+    setFullResponse({
+      ...fullResponse,
+      items: [...fullResponse.items, newItem]
+    });
+  };
+
+  const handleDeleteItem = (index: number) => {
+    if (!fullResponse) return;
+    
+    const updatedItems = [...fullResponse.items];
+    updatedItems.splice(index, 1);
+    
+    setFullResponse({
+      ...fullResponse,
+      items: updatedItems
+    });
+
+    // Also remove any assignments for this item
+    setItemAssignments(prev => 
+      prev.filter(assignment => assignment.itemIndex !== index)
+          .map(assignment => ({
+            ...assignment,
+            itemIndex: assignment.itemIndex > index ? assignment.itemIndex - 1 : assignment.itemIndex
+          }))
+    );
+  };
+
+  const validateBill = () => {
+    if (!fullResponse) return false;
+
+    // Check if all items have names and prices
+    const hasInvalidItems = fullResponse.items.some((item: SplitBillItem) => 
+      !item.name.trim() || !item.price || parseFloat(item.price) <= 0
+    );
+
+    // Check if all items have at least one contact assigned
+    const hasUnassignedItems = fullResponse.items.some((_: SplitBillItem, index: number) => 
+      !itemAssignments.some(a => a.itemIndex === index)
+    );
+
+    if (hasInvalidItems) {
+      alert("Please make sure all items have valid names and prices");
+      return false;
+    }
+
+    if (hasUnassignedItems) {
+      alert("Please assign at least one contact to each item");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSendBill = async () => {
     if (!fullResponse || !user) return;
+
+    if (!validateBill()) return;
 
     const billData = {
       clerkId: user.id,
@@ -322,47 +393,17 @@ export default function UploadBill() {
             </div>
 
             {/* Add Contacts button */}
-            <Link href="/view-contact" className="block">
-              <div className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer">
-                Add Contacts
+            {isProcessing && !fullResponse && (            
+              <div className="text-center">
+                <p>Add your contacts before scanning!</p>
+                <Link href="/view-contact" className="block">
+                  <div className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-200 cursor-pointer">
+                    Add Contacts
+                  </div>
+                </Link>
               </div>
-            </Link>
+            )}
 
-            <div className="w-full flex items-center justify-center gap-2">
-              <input
-                type="checkbox"
-                id="tipsInCash"
-                checked={tipsInCash}
-                onChange={(e) => setTipsInCash(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <label htmlFor="tipsInCash">Tips paid in cash</label>
-            </div>
-
-            
-
-            {tipsInCash && (
-            <div className="w-full flex items-center justify-center gap-2">
-              <label htmlFor="cashTipAmount">Cash tip amount: $</label>
-              <Input
-                id="cashTipAmount"
-                type="text"
-                value={cashTipAmount === 0 ? '' : cashTipAmount.toString()}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Allow empty input or valid decimal numbers
-                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                    setCashTipAmount(value === '' ? 0 : parseFloat(value || '0'));
-                  }
-                }}
-                className="w-24 border rounded"
-                placeholder="0.00"
-                inputMode="decimal"
-              />
-            </div>
-          )}
-
-          
           
 
           {imageUrl && (
@@ -382,23 +423,76 @@ export default function UploadBill() {
               <p>{fullResponse.date || "Date not available"}</p>
               <p>{fullResponse.time || "Time not available"}</p>
 
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Items</h3>
+                <Button
+                  onClick={handleAddItem}
+                  className="bg-emerald-500 hover:bg-emerald-600"
+                >
+                  Add Item
+                </Button>
+              </div>
+
               {fullResponse.items.map((item: any, index: number) => (
                 <Card key={index} className="mt-1">
-                  <CardHeader>
-                    <CardTitle>{item.name || "Item Name"}</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div className="flex-1 mr-4">
+                      <Input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => {
+                          const updatedName = e.target.value;
+                          const updatedItems = [...fullResponse.items];
+                          updatedItems[index].name = updatedName;
+                          setFullResponse({ ...fullResponse, items: updatedItems });
+                        }}
+                        className="text-xl font-semibold"
+                        placeholder="Item name"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteItem(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-col gap-2">
-                      <div className="flex justify-between">
-                        <span>x {item.quantity || 1}</span>
-                        <span className="flex items-center">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span>x</span>
+                          <Input
+                            type="number"
+                            value={item.quantity || 1}
+                            onChange={(e) => {
+                              const updatedQuantity = parseInt(e.target.value) || 1;
+                              const updatedItems = [...fullResponse.items];
+                              updatedItems[index].quantity = updatedQuantity;
+                              setFullResponse({ ...fullResponse, items: updatedItems });
+                            }}
+                            className="w-16"
+                            min="1"
+                          />
+                        </div>
+                        <div className="flex items-center">
                           <span className="mr-2">$</span>
                           <Input
                             type="number"
-                            defaultValue={item.price ? item.price.replace('$', '') : "0"}
-                            className="w-24 border rounded mx-2"
+                            value={item.price ? item.price.replace('$', '') : "0"}
+                            onChange={(e) => {
+                              const updatedPrice = e.target.value;
+                              const updatedItems = [...fullResponse.items];
+                              updatedItems[index].price = updatedPrice;
+                              setFullResponse({ ...fullResponse, items: updatedItems });
+                            }}
+                            className="w-24"
+                            min="0"
+                            step="0.01"
                           />
-                        </span>
+                        </div>
                       </div>
                       <div className="mt-2">
                         <SelectContact 
@@ -467,29 +561,42 @@ export default function UploadBill() {
                       />
                     </span>
                   </div>
-                  {tipsInCash && (
-                    <div className="flex justify-between items-center">
-                      <span className="flex-grow">
-                        <strong>Tips:</strong>
-                      </span>
-                      <span className="flex items-center">
-                        <span className="mr-2">$</span>
-                        <Input
-                          type="text"
-                          value={cashTipAmount === 0 ? '' : cashTipAmount.toString()}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                              setCashTipAmount(value === '' ? 0 : parseFloat(value || '0'));
-                            }
-                          }}
-                          className="w-24 border rounded mx-2"
-                          placeholder="0.00"
-                          inputMode="decimal"
+                  
+                  {fullResponse && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="tipsInCash"
+                          checked={tipsInCash}
+                          onChange={(e) => setTipsInCash(e.target.checked)}
+                          className="rounded border-gray-300"
                         />
-                      </span>
+                        <label htmlFor="tipsInCash">Tips paid in cash</label>
+                      </div>
+
+                      {tipsInCash && (
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="cashTipAmount">Tip amount: $</label>
+                          <Input
+                            id="cashTipAmount"
+                            type="text"
+                            value={cashTipAmount === 0 ? '' : cashTipAmount.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                                setCashTipAmount(value === '' ? 0 : parseFloat(value || '0'));
+                              }
+                            }}
+                            className="w-24 border rounded"
+                            placeholder="0.00"
+                            inputMode="decimal"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
+
                   <div className="flex justify-between items-center">
                     <span className="flex-grow">
                       <strong>Total:</strong>

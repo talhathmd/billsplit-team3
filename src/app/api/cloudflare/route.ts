@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const messages = [
       {
         role: "system",
-        content: "Extract data about a bill. If unsure keep empty, add all taxes to total tax",
+        content: "Extract data about a bill. If unsure keep empty, add all taxes to total tax, understand that everything should add up",
       },
       {
         role: "user",
