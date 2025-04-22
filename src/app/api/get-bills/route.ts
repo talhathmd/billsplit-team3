@@ -13,7 +13,7 @@ export async function GET() {
         }
 
         const bills = await Bill.find({ clerkId: clerkUser.id });
-        return NextResponse.json(bills);
+        return NextResponse.json({ success: true, bills });
     } catch (error) {
         console.error("Error fetching bills:", error);
         return NextResponse.json({ error: "Failed to fetch bills" }, { status: 500 });

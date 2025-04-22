@@ -128,8 +128,12 @@ export default function BillHistoryItem() {
             }
             const data = await response.json();
 
+            if (!data.success) {
+                throw new Error('Failed to fetch bills');
+            }
+
             // sort bills by date in descending order (newest first)
-            const sortedBills = [...data].sort((a, b) => {
+            const sortedBills = [...data.bills].sort((a, b) => {
                 // First try to sort by createdAt timestamp
                 if (a.createdAt && b.createdAt) {
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -438,6 +442,7 @@ export default function BillHistoryItem() {
             <div className="flex flex-col">
                 {/* Close button row */}
                 <div className="flex justify-end">
+                <h2 className="text-xl font-bold flex-1">{selectedBill.storeName}</h2>
                     <button
                     onClick={closeModal}
                     className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
@@ -446,6 +451,9 @@ export default function BillHistoryItem() {
                     &times;
                     </button>
                 </div>
+
+                
+
 
                 {/* Date and Time row */}
                 <div className="flex justify-between items-center mt-2">

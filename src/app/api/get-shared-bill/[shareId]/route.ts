@@ -4,6 +4,7 @@ import ShareLink from "@/lib/models/sharelink.model";
 import Bill from "@/lib/models/bills.model";
 import Contact from "@/lib/models/contact.model";
 import { auth } from "@clerk/nextjs/server";
+import mongoose from "mongoose";
 
 interface BillItem {
     name: string;
@@ -18,9 +19,10 @@ export async function GET(
 ) {
     try {
         await connectToDB();
+        const { userId } = await auth();
+        const { shareId } = params;
 
-        const { userId } = auth();
-        const shareLink = await ShareLink.findById(params.shareId);
+        const shareLink = await ShareLink.findOne({ shareId });
         if (!shareLink) {
             return NextResponse.json({ error: "Share link not found" }, { status: 404 });
         }
@@ -30,7 +32,23 @@ export async function GET(
             return NextResponse.json({ error: "Bill not found" }, { status: 404 });
         }
 
-        const contact = await Contact.findById(shareLink.contactId);
+        // Handle both Clerk user IDs and MongoDB ObjectIds
+        let contact;
+        if (shareLink.contactId.startsWith("user_")) {
+            // If it's a Clerk user ID, find by clerkId
+            contact = await Contact.findOne({ clerkId: shareLink.contactId });
+        } else {
+            // If it's a MongoDB ObjectId, find by _id
+            contact = await Contact.findById(shareLink.contactId);
+        }
+
+        if (!contact) {
+            // If no contact found, create a default one
+            contact = {
+                name: "Me",
+                clerkId: shareLink.contactId
+            };
+        }
 
         // Calculate personal bill for this contact
         const personalBill = {
@@ -53,7 +71,7 @@ export async function GET(
         const subtotal = personalBill.items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
         const proportion = subtotal / bill.subtotal;
         const taxShare = bill.totalTax * proportion;
-        const tipShare = (bill.tipAmount || 0) * proportion;  // Calculate tip share
+        const tipShare = (bill.tipAmount || 0) * proportion;
 
         const isCurrentUser = 
             (shareLink.contactId.startsWith("user_") && shareLink.contactId === userId) || 
@@ -71,9 +89,9 @@ export async function GET(
             ...personalBill,
             subtotal,
             taxShare,
-            tipShare,  // Include tip share in response
-            total: subtotal + taxShare + tipShare,  // Add tip to total
-            contactName: contact ? contact.name : "Unknown",
+            tipShare,
+            total: subtotal + taxShare + tipShare,
+            contactName: contact.name || "Me",
             contactId: shareLink.contactId,
             isCurrentUser,
             isMyBill,
